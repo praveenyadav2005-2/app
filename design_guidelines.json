@@ -1,0 +1,133 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "IE CODE ENIGMA – ROUND 1",
+      "theme": "Stranger Things / Escape the Upside Down",
+      "tone": "Horror, Retro-SciFi, Tense, Glitch",
+      "core_metaphor": "Trapped in a corrupted terminal inside the Upside Down"
+    },
+    "typography": {
+      "headings": {
+        "family": "Creepster, cursive",
+        "fallback": "system-ui",
+        "usage": "Main titles, Game Over screen, Level announcements",
+        "attributes": "text-red-600 tracking-widest uppercase drop-shadow-[0_0_10px_rgba(255,0,0,0.8)]"
+      },
+      "body": {
+        "family": "VT323, monospace",
+        "fallback": "monospace",
+        "usage": "Instructions, Story text, Dialogs",
+        "attributes": "text-gray-300 text-xl tracking-wide"
+      },
+      "code": {
+        "family": "Source Code Pro, monospace",
+        "fallback": "monospace",
+        "usage": "Coding challenges, Input fields, Terminal logs",
+        "attributes": "text-green-400 bg-black/80 p-2 rounded border border-green-900/50"
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": "#050505",
+        "foreground": "#e0e0e0",
+        "primary": "#ff0000",
+        "primary_dim": "#8a0000",
+        "secondary": "#1a1a1a",
+        "accent": "#ff4444",
+        "success": "#00ff00",
+        "error": "#ff0000",
+        "void": "#000000"
+      },
+      "gradients": {
+        "upside_down": "linear-gradient(180deg, #000000 0%, #1a0505 50%, #330000 100%)",
+        "portal_glow": "radial-gradient(circle, rgba(255,0,0,0.5) 0%, rgba(0,0,0,0) 70%)"
+      }
+    },
+    "visual_enhancers": {
+      "crt_overlay": "pointer-events-none fixed inset-0 z-50 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none",
+      "vignette": "fixed inset-0 pointer-events-none bg-[radial-gradient(circle,transparent_50%,black_100%)] z-40",
+      "text_glow": "drop-shadow-[0_0_5px_rgba(255,0,0,0.7)]",
+      "glitch_animation": "animate-pulse"
+    },
+    "layout": {
+      "grid_system": "Use 'Bento' grid for dashboards (Leaderboard), Full-screen canvas for Game",
+      "spacing": "Generous padding (p-8, p-12) for text containers to mimic retro terminal spacing",
+      "containers": "Bordered with 1px solid #330000, bg-black/90, backdrop-blur-sm"
+    },
+    "components": {
+      "buttons": {
+        "style": "border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-black transition-all duration-75 uppercase font-mono tracking-widest",
+        "interaction": "Active state should 'flicker' (opacity 0.8 to 1)"
+      },
+      "inputs": {
+        "style": "bg-black border-b-2 border-red-800 text-red-500 font-mono focus:outline-none focus:border-red-500 placeholder:text-red-900/50",
+        "prefix": "> "
+      },
+      "modals": {
+        "style": "bg-black border border-red-600 shadow-[0_0_30px_rgba(255,0,0,0.3)] relative overflow-hidden",
+        "decoration": "Add 'TOP SECRET' or 'HAWKINS LAB' stamps in corners"
+      }
+    },
+    "assets": {
+      "images": [
+        {
+          "category": "background",
+          "url": "https://images.unsplash.com/photo-1716118493348-c9cf6b3513a6?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "description": "Red infrared path in woods - Main Game Background",
+          "usage": "Game Loop Background (Parallax)"
+        },
+        {
+          "category": "portal",
+          "url": "https://images.unsplash.com/photo-1758472712764-4b746ea18d9b?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "description": "Glowing red portal with silhouette",
+          "usage": "Obstacle / Question Trigger Point"
+        },
+        {
+          "category": "enemy",
+          "url": "https://images.unsplash.com/photo-1765410853873-c8e85309c73d?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "description": "Abstract dark glitch texture",
+          "usage": "The 'Demogorgon' presence or Game Over overlay texture"
+        },
+        {
+          "category": "ui_texture",
+          "url": "https://images.unsplash.com/photo-1748366465774-aaa2160fe78d?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "description": "CRT Monitor Line",
+          "usage": "Overlay texture for retro feel"
+        }
+      ],
+      "icons": {
+        "library": "lucide-react",
+        "preferred": ["Skull", "Zap", "Terminal", "Ghost", "Lock", "Play", "RotateCcw"]
+      }
+    },
+    "motion": {
+      "transitions": "Sharp, instant (0s or 0.1s) to mimic digital switching. No smooth fades.",
+      "animations": {
+        "float": "animate-bounce duration-[3000ms]",
+        "pulse": "animate-pulse duration-75"
+      }
+    }
+  },
+  "implementation_guide": {
+    "tech_stack": {
+      "framework": "React",
+      "styling": "Tailwind CSS",
+      "game_engine": "Phaser 3",
+      "icons": "lucide-react"
+    },
+    "file_structure_notes": {
+      "components": "/app/frontend/src/components",
+      "pages": "/app/frontend/src/pages",
+      "assets": "/app/frontend/src/assets",
+      "styles": "/app/frontend/src/index.css"
+    },
+    "universal_rules": [
+      "Use 'data-testid' for all interactive elements.",
+      "Ensure text contrast is readable (Red on Black can be tricky, use light red #ff4444 for text).",
+      "Do not use gradients for text, only for backgrounds.",
+      "All inputs must be controlled components.",
+      "Game state must be managed in a parent React context or Zustand store to sync HUD and Phaser."
+    ]
+  },
+  "instructions_to_main_agent": "1. Install 'lucide-react' and 'phaser'. 2. Create the 'CRT Overlay' component first and wrap the App in it. 3. Build the 'GameContext' to manage health, score, and game status. 4. Implement the Phaser Game scene with the provided background image. 5. Use the 'Creepster' font for the 'CODE ENIGMA' title. 6. Ensure the 'Question Modal' pauses the Phaser game scene when active."
+}
