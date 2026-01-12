@@ -44,13 +44,13 @@ export default class RunnerScene extends Phaser.Scene {
   createPlayerSprite() {
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
     
-    // Simple pixel art character - 32x48
+    // Colorful pixel art character - 32x48
     const colors = {
       skin: 0xffcc99,
-      hair: 0x4a3728,
-      shirt: 0xff4444,
-      pants: 0x333366,
-      shoes: 0x222222,
+      hair: 0x8b3a3a,
+      shirt: 0xff3333,
+      pants: 0x1a3d6e,
+      shoes: 0x1a1a1a,
     };
 
     // Hair
@@ -66,16 +66,16 @@ export default class RunnerScene extends Phaser.Scene {
     graphics.fillRect(11, 11, 3, 3);
     graphics.fillRect(18, 11, 3, 3);
     
-    // Body/Shirt
+    // Body/Shirt - Red
     graphics.fillStyle(colors.shirt);
     graphics.fillRect(6, 20, 20, 14);
     
-    // Arms
+    // Arms - Skin
     graphics.fillStyle(colors.skin);
     graphics.fillRect(2, 20, 4, 10);
     graphics.fillRect(26, 20, 4, 10);
     
-    // Pants
+    // Pants - Blue
     graphics.fillStyle(colors.pants);
     graphics.fillRect(8, 34, 7, 10);
     graphics.fillRect(17, 34, 7, 10);
@@ -92,24 +92,29 @@ export default class RunnerScene extends Phaser.Scene {
   createPortalSprite() {
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
     
+    // Bright red glowing portal - 80x100
     // Outer glow
-    graphics.fillStyle(0xff0000, 0.2);
-    graphics.fillCircle(40, 50, 40);
+    graphics.fillStyle(0xff0000, 0.15);
+    graphics.fillCircle(40, 50, 45);
     
-    // Middle ring
-    graphics.fillStyle(0xff0000, 0.4);
-    graphics.fillCircle(40, 50, 30);
+    // Middle glow
+    graphics.fillStyle(0xff0000, 0.3);
+    graphics.fillCircle(40, 50, 35);
+    
+    // Mid ring
+    graphics.fillStyle(0xff0000, 0.5);
+    graphics.fillCircle(40, 50, 25);
     
     // Inner core
-    graphics.fillStyle(0xff0000, 0.8);
-    graphics.fillCircle(40, 50, 20);
+    graphics.fillStyle(0xff2222, 0.8);
+    graphics.fillCircle(40, 50, 15);
     
     // Center void
     graphics.fillStyle(0x000000, 1);
-    graphics.fillCircle(40, 50, 10);
+    graphics.fillCircle(40, 50, 8);
     
-    // Rift lines
-    graphics.lineStyle(3, 0xff4444, 0.8);
+    // Rift lines - bright red
+    graphics.lineStyle(2, 0xff4444, 0.9);
     graphics.beginPath();
     graphics.moveTo(10, 30);
     graphics.lineTo(40, 50);
@@ -186,6 +191,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.player.setCollideWorldBounds(true);
     this.player.setBounce(0.1);
     this.player.setGravityY(300);
+    this.player.setScale(1.2);
     
     // Portals group
     this.portals = this.physics.add.group({
@@ -286,7 +292,9 @@ export default class RunnerScene extends Phaser.Scene {
     
     // Call game tick for time updates
     if (this.onGameTick) {
-      this.onGameTick(delta / 1000);
+      const deltaSeconds = delta / 1000;
+      console.log(`[RunnerScene.update] Calling onGameTick with delta: ${deltaSeconds}s, isGameActive: ${this.isGameActive}`);
+      this.onGameTick(deltaSeconds);
     }
   }
 

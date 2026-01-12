@@ -43,6 +43,11 @@ const PhaserGame = () => {
       width: gameContainerRef.current.clientWidth,
       height: 400,
       backgroundColor: '#050505',
+      render: {
+        pixelArt: true,
+        antialias: false,
+        powerPreference: 'high-performance',
+      },
       physics: {
         default: 'arcade',
         arcade: {
@@ -52,8 +57,10 @@ const PhaserGame = () => {
       },
       scene: RunnerScene,
       scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
+        expandParent: true,
+        fullscreenTarget: 'game',
       },
     };
 

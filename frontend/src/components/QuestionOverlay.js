@@ -61,39 +61,39 @@ const QuestionOverlay = () => {
   return (
     <div 
       data-testid="question-overlay"
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/98 backdrop-blur-md"
     >
-      <div className="w-full max-w-2xl mx-4 bg-black border-2 border-red-600 box-glow-red relative overflow-hidden">
-        {/* Top bar with stamps */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-red-900/50 bg-red-950/20">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-red-500" />
-            <span className="font-vt323 text-red-400 tracking-widest uppercase text-sm">
-              Corrupted Portal Detected
+      <div className="w-full max-w-3xl mx-4 bg-gradient-to-b from-black to-red-950/20 border-2 border-red-600/80 box-glow-red relative overflow-hidden rounded-lg shadow-2xl">
+        {/* Top bar - enhanced */}
+        <div className="flex items-center justify-between px-8 py-4 border-b border-red-900/60 bg-gradient-to-r from-red-950/30 to-transparent">
+          <div className="flex items-center gap-3">
+            <Terminal className="w-6 h-6 text-red-500 drop-shadow-lg" />
+            <span className="font-code text-red-300 tracking-widest uppercase text-sm font-bold">
+              CIPHER CHALLENGE
             </span>
           </div>
-          <span className="font-code text-xs text-red-600 opacity-60">
-            HAWKINS LAB // CLASSIFIED
+          <span className="font-code text-xs text-red-500/80 opacity-70">
+            PORTAL LOCK PROTOCOL
           </span>
         </div>
 
-        {/* Timer bar */}
-        <div className="h-2 bg-red-950/30">
+        {/* Timer bar - improved */}
+        <div className="h-3 bg-gradient-to-r from-red-950/50 to-transparent overflow-hidden">
           <div 
-            className={`h-full transition-all duration-1000 ${
-              isLowTime ? 'bg-red-500 animate-pulse' : 'bg-red-600'
+            className={`h-full transition-all duration-1000 bg-gradient-to-r ${
+              isLowTime ? 'from-red-500 to-red-600 animate-pulse shadow-lg shadow-red-500' : 'from-red-600 to-red-700'
             }`}
             style={{ width: `${timePercentage}%` }}
           />
         </div>
 
         {/* Content */}
-        <div className="p-8">
-          {/* Timer display */}
-          <div data-testid="question-timer" className="flex items-center justify-center gap-2 mb-6">
-            <Clock className={`w-6 h-6 ${isLowTime ? 'text-red-500 animate-pulse' : 'text-gray-400'}`} />
-            <span className={`font-code text-4xl ${
-              isLowTime ? 'text-red-500 animate-flicker' : 'text-gray-300'
+        <div className="p-10">
+          {/* Timer display - centered and bold */}
+          <div data-testid="question-timer" className="flex items-center justify-center gap-4 mb-8">
+            <Clock className={`w-8 h-8 ${isLowTime ? 'text-red-500 animate-pulse drop-shadow-lg' : 'text-cyan-400'}`} />
+            <span className={`font-code text-5xl font-bold tracking-wider ${
+              isLowTime ? 'text-red-500 animate-flicker drop-shadow-lg' : 'text-cyan-300'
             }`}>
               {timeRemaining}s
             </span>
@@ -101,31 +101,31 @@ const QuestionOverlay = () => {
 
           {/* Warning for low time */}
           {isLowTime && (
-            <div className="flex items-center justify-center gap-2 mb-4 text-red-400 animate-pulse">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-vt323 text-lg uppercase tracking-wider">
-                Demogorgon Approaching!
+            <div className="flex items-center justify-center gap-3 mb-6 px-4 py-3 bg-red-950/40 border border-red-600/60 rounded text-red-300 animate-pulse">
+              <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+              <span className="font-code text-base uppercase tracking-widest font-bold">
+                Portal Instability Critical!
               </span>
             </div>
           )}
 
-          {/* Question text */}
-          <div className="mb-8">
-            <p className="font-vt323 text-gray-300 text-lg mb-2 opacity-60">
-              {currentQuestion.difficulty} LEVEL CIPHER
+          {/* Question section */}
+          <div className="mb-10 p-6 bg-black/50 border border-red-900/40 rounded">
+            <p className="font-code text-red-400 text-sm mb-4 opacity-80 uppercase tracking-widest">
+              {currentQuestion.difficulty} CIPHER LEVEL
             </p>
             
             {currentQuestion.hasCode ? (
-              <div className="space-y-4">
-                <p className="font-vt323 text-xl text-gray-200">
+              <div className="space-y-5">
+                <p className="font-code text-lg text-gray-100 leading-relaxed">
                   {currentQuestion.questionText.split('\n')[0]}
                 </p>
-                <pre className="code-block">
-                  {currentQuestion.questionText.split('\n').slice(1).join('\n')}
+                <pre className="code-block bg-black/80 border border-cyan-900/40 p-4 rounded overflow-x-auto">
+                  <code className="text-cyan-300">{currentQuestion.questionText.split('\n').slice(1).join('\n')}</code>
                 </pre>
               </div>
             ) : (
-              <p data-testid="question-text" className="font-vt323 text-xl text-gray-200 leading-relaxed">
+              <p data-testid="question-text" className="font-code text-lg text-gray-100 leading-relaxed">
                 {currentQuestion.questionText}
               </p>
             )}
@@ -133,8 +133,8 @@ const QuestionOverlay = () => {
 
           {/* Answer form */}
           <form onSubmit={onSubmit} className="space-y-6">
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-red-600 font-code text-xl">
+            <div className="relative group">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-cyan-500 font-code text-2xl group-focus-within:text-red-500">
                 {'>'}
               </span>
               <input
@@ -143,7 +143,7 @@ const QuestionOverlay = () => {
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Enter your answer..."
-                className="game-input pl-10 text-xl"
+                className="w-full px-16 py-4 bg-black border-2 border-cyan-600/50 focus:border-cyan-500 text-cyan-300 font-code text-lg placeholder-gray-600 outline-none transition-all rounded focus:shadow-lg focus:shadow-cyan-500/20"
                 autoFocus
                 disabled={isSubmitting}
               />
@@ -153,21 +153,25 @@ const QuestionOverlay = () => {
               data-testid="submit-answer-btn"
               type="submit"
               disabled={!answer.trim() || isSubmitting}
-              className="w-full game-button text-xl py-4"
+              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:from-gray-700 disabled:to-gray-800 text-white font-code text-lg py-4 rounded font-bold uppercase tracking-wider transition-all transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-red-500/50"
             >
-              {isSubmitting ? 'TRANSMITTING...' : 'STABILIZE PORTAL'}
+              {isSubmitting ? (
+                <span className="animate-flicker">TRANSMITTING...</span>
+              ) : (
+                'STABILIZE PORTAL'
+              )}
             </Button>
           </form>
 
           {/* Hint */}
-          <p className="mt-6 text-center text-gray-600 text-sm font-vt323">
-            Type your answer exactly. Case insensitive.
+          <p className="mt-6 text-center text-gray-500 text-sm font-code">
+            Answer is case-insensitive. Exact spelling required.
           </p>
         </div>
 
-        {/* Corner decorations */}
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-red-600/50" />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-red-600/50" />
+        {/* Decorative corners */}
+        <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-red-600/60" />
+        <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-red-600/60" />
       </div>
     </div>
   );

@@ -28,8 +28,15 @@ export const SCORING = {
 };
 
 export const GameProvider = ({ children }) => {
+  // Track last known username to detect changes
+  const lastUsernameRef = useRef(localStorage.getItem('username') || '');
+  
   // Player info
-  const [playerId, setPlayerId] = useState('');
+  const [userId, setUserId] = useState(localStorage.getItem('userId') || '');
+  const [username, setUsername] = useState(localStorage.getItem('username') || '');
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [playerId, setPlayerId] = useState(localStorage.getItem('username') || '');
   const [playerPassword, setPlayerPassword] = useState('');
   
   // Game state
@@ -55,6 +62,70 @@ export const GameProvider = ({ children }) => {
   
   // Phaser game reference
   const phaserGameRef = useRef(null);
+
+  // Check for username changes on every render
+  React.useEffect(() => {
+    const currentUsername = localStorage.getItem('username');
+    const lastUsername = lastUsernameRef.current;
+
+    if (currentUsername !== lastUsername) {
+      console.log(`🔄 [GameContext] Username changed: "${lastUsername}" → "${currentUsername}"`);
+      lastUsernameRef.current = currentUsername;
+
+      if (currentUsername) {
+        // New user logged in
+        console.log('✅ [GameContext] Syncing to new user:', currentUsername);
+        setUsername(currentUsername);
+        setUserId(localStorage.getItem('userId') || '');
+        setToken(localStorage.getItem('token') || '');
+        setUserEmail(localStorage.getItem('userEmail') || '');
+        setPlayerId(currentUsername);
+
+        // CRITICAL: Reset ALL game state for new user
+        resetGameState();
+      } else {
+        // User logged out
+        console.log('🚪 [GameContext] User logged out');
+        setUsername('');
+        setUserId('');
+        setToken('');
+        setUserEmail('');
+        setPlayerId('');
+        resetGameState();
+      }
+    }
+  });
+
+  // Function to reset all game state
+  const resetGameState = useCallback(() => {
+    console.log('🔄 [GameContext] Resetting all game state');
+    setGameStatus('idle');
+    setHealth(INITIAL_HEALTH);
+    setScore(0);
+    setPortalsCleared(0);
+    setDifficulty(DIFFICULTY.EASY);
+    setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
+    setTimeSurvived(0);
+    setCurrentSpeed(INITIAL_SPEED);
+    setActivePowerUps([]);
+    setSpeedMultiplier(1);
+    setScoreMultiplier(1);
+    setShowQuestionOverlay(false);
+    setShowResultOverlay(false);
+    setCurrentQuestion(null);
+    setLastResult(null);
+  }, []);
+
+  // Listen for explicit reset events
+  React.useEffect(() => {
+    const handleResetEvent = () => {
+      console.log('🎯 [GameContext] Reset event received');
+      resetGameState();
+    };
+
+    window.addEventListener('gameContextSync', handleResetEvent);
+    return () => window.removeEventListener('gameContextSync', handleResetEvent);
+  }, [resetGameState]);
 
   // Start a new game
   const startGame = useCallback((id, password) => {
@@ -148,7 +219,11 @@ export const GameProvider = ({ children }) => {
       setHealth(newHealth);
     }
     
-    setScore(prev => Math.max(0, prev + scoreDelta));
+    setScore(prev => {
+      const newScore = Math.max(0, prev + scoreDelta);
+      console.log(`[GameContext.submitAnswer] Score update: ${prev} + ${scoreDelta} = ${newScore}`);
+      return newScore;
+    });
     
     const result = {
       correct: isCorrect,
@@ -247,6 +322,10 @@ export const GameProvider = ({ children }) => {
 
   const value = {
     // Player info
+    userId,
+    username,
+    userEmail,
+    token,
     playerId,
     playerPassword,
     

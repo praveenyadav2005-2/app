@@ -3,36 +3,83 @@ import { useNavigate } from 'react-router-dom';
 import { Skull, Target, Clock, Zap, Trophy } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useGame } from '../context/GameContext';
-import { formatLongTime, addToLeaderboard } from '../data/mockData';
+import API_URL from '../config';
 
 const GameOverScreen = () => {
   const navigate = useNavigate();
-  const { playerId, score, portalsCleared, timeSurvived, health } = useGame();
-  const [playerRank, setPlayerRank] = useState(null);
+  const gameContext = useGame();
+  const { score, portalsCleared, timeSurvived, health } = gameContext;
+  
+  // Use current username from localStorage, not just from context
+  const username = localStorage.getItem('username') || gameContext.username;
+  
+  console.log('GameOverScreen - username from localStorage:', localStorage.getItem('username'));
+  console.log('GameOverScreen - username from context:', gameContext.username);
+  console.log('GameOverScreen - using username:', username);
+  console.log('GameOverScreen - score:', score, 'type:', typeof score);
+  console.log('GameOverScreen - portalsCleared:', portalsCleared);
+  console.log('GameOverScreen - timeSurvived:', timeSurvived);
+  console.log('GameOverScreen - health:', health);
+  
   const [showStats, setShowStats] = useState(false);
+  const [isSavingScore, setIsSavingScore] = useState(false);
+  const [scoreError, setScoreError] = useState('');
 
   useEffect(() => {
     // Animate stats appearance
     const timer = setTimeout(() => setShowStats(true), 500);
 
-    // Calculate player rank
-    if (playerId) {
-      const updatedLeaderboard = addToLeaderboard({
-        name: playerId,
-        rollNo: 'PLAYER',
-        score,
-        portalsCleared,
-        timeSurvived,
-      });
-      
-      const playerEntry = updatedLeaderboard.find(entry => entry.name === playerId);
-      if (playerEntry) {
-        setPlayerRank(playerEntry.rank);
-      }
+    // Save score to database (even if score is 0)
+    if (username) {
+      saveScoreToDB();
     }
 
     return () => clearTimeout(timer);
-  }, [playerId, score, portalsCleared, timeSurvived]);
+  }, [username, score, portalsCleared, timeSurvived]);
+
+  const saveScoreToDB = async () => {
+    setIsSavingScore(true);
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token); // Debug log
+      
+      if (!token) {
+        setScoreError('No authentication token found. Please login again.');
+        console.error('Token not found in localStorage');
+        return;
+      }
+
+      console.log('📤 Sending score to backend:', { score, portalsCleared, timeSurvived, username });
+
+      const response = await fetch(`${API_URL}/api/game/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          score: score,
+          portalsCleared: portalsCleared,
+          timeSurvived: timeSurvived
+        })
+      });
+
+      const data = await response.json();
+      console.log('✅ Score save response:', data);
+
+      if (!response.ok) {
+        setScoreError(data.message || 'Failed to save score');
+        console.error('❌ Score save error:', data);
+      } else {
+        console.log('✅ Score saved successfully for user:', username);
+      }
+    } catch (err) {
+      setScoreError('Network error: Could not save score');
+      console.error('❌ Score save network error:', err);
+    } finally {
+      setIsSavingScore(false);
+    }
+  };
 
   const handleViewLeaderboard = () => {
     navigate('/leaderboard');
@@ -138,20 +185,27 @@ const GameOverScreen = () => {
                 <span className="font-vt323 text-lg text-gray-400">Time Survived</span>
               </div>
               <span data-testid="time-survived" className="font-vt323 text-2xl text-gray-300">
-                {formatLongTime(timeSurvived)}
+                {`${Math.floor(timeSurvived / 60)}m ${timeSurvived % 60}s`}
               </span>
             </div>
 
-            {/* Rank preview */}
-            {playerRank && (
-              <div className="flex items-center justify-between p-3 bg-purple-950/30 border border-purple-600">
-                <div className="flex items-center gap-3">
-                  <Trophy className="w-6 h-6 text-purple-400" />
-                  <span className="font-vt323 text-lg text-purple-300">Your Rank</span>
-                </div>
-                <span className="font-vt323 text-2xl text-purple-400">
-                  #{playerRank}
-                </span>
+            {/* Score Save Status */}
+            {isSavingScore && (
+              <div className="flex items-center justify-between p-3 bg-blue-950/30 border border-blue-600">
+                <span className="font-vt323 text-lg text-blue-300">Saving Score...</span>
+                <span className="animate-pulse text-blue-400">●</span>
+              </div>
+            )}
+
+            {scoreError && (
+              <div className="flex items-center justify-between p-3 bg-red-950/30 border border-red-600">
+                <span className="font-vt323 text-lg text-red-300">{scoreError}</span>
+              </div>
+            )}
+
+            {!isSavingScore && !scoreError && (
+              <div className="flex items-center justify-between p-3 bg-green-950/30 border border-green-600">
+                <span className="font-vt323 text-lg text-green-300">✓ Score Saved</span>
               </div>
             )}
           </div>
@@ -179,7 +233,7 @@ const GameOverScreen = () => {
 
         {/* Player ID */}
         <p className="mt-6 text-center font-code text-sm text-gray-600">
-          SUBJECT: {playerId || 'UNKNOWN'}
+          SUBJECT: {username || 'UNKNOWN'}
         </p>
       </div>
     </div>

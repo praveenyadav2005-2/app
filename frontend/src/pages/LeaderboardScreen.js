@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Medal, ArrowLeft, Crown, Star } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useGame } from '../context/GameContext';
-import { mockLeaderboard, addToLeaderboard, formatLongTime } from '../data/mockData';
+import API_URL from '../config';
 import {
   Table,
   TableBody,
@@ -16,28 +16,40 @@ import { ScrollArea } from '../components/ui/scroll-area';
 
 const LeaderboardScreen = () => {
   const navigate = useNavigate();
-  const { playerId, score, portalsCleared, timeSurvived } = useGame();
+  const { username, score } = useGame();
   const [leaderboardData, setLeaderboardData] = useState([]);
-  const [playerEntry, setPlayerEntry] = useState(null);
+  const [playerRank, setPlayerRank] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Add current player to leaderboard if they played
-    if (playerId && score > 0) {
-      const updatedLeaderboard = addToLeaderboard({
-        name: playerId,
-        rollNo: 'PLAYER',
-        score,
-        portalsCleared,
-        timeSurvived,
-      });
-      setLeaderboardData(updatedLeaderboard);
-      
-      const entry = updatedLeaderboard.find(e => e.name === playerId);
-      setPlayerEntry(entry);
-    } else {
-      setLeaderboardData(mockLeaderboard);
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_URL}/api/game/leaderboard`);
+      const data = await response.json();
+
+      if (data.success) {
+        setLeaderboardData(data.leaderboard);
+        
+        // Find current player's rank if they have a score
+        if (username && score > 0) {
+          const playerEntry = data.leaderboard.find(entry => entry.username === username);
+          if (playerEntry) {
+            setPlayerRank(playerEntry);
+          }
+        }
+      }
+    } catch (err) {
+      setError('Failed to load leaderboard');
+      console.error('Leaderboard fetch error:', err);
+    } finally {
+      setIsLoading(false);
     }
-  }, [playerId, score, portalsCleared, timeSurvived]);
+  };
 
   const handleBack = () => {
     navigate('/');
@@ -57,7 +69,15 @@ const LeaderboardScreen = () => {
   };
 
   const isTopTen = (rank) => rank <= 10;
-  const isCurrentPlayer = (name) => name === playerId;
+  const isCurrentPlayer = (name) => name === username;
+  
+  const formatTime = (seconds) => {
+    if (!seconds) return '0s';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m ${secs}s`;
+  };
 
   return (
     <div 
@@ -94,89 +114,109 @@ const LeaderboardScreen = () => {
         </div>
 
         {/* Player's current rank banner */}
-        {playerEntry && (
+        {playerRank && (
           <div className="mb-6 p-4 bg-purple-950/30 border border-purple-600 box-glow-red">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Star className="w-8 h-8 text-purple-400" />
                 <div>
                   <p className="font-vt323 text-sm text-purple-300">YOUR RANK</p>
-                  <p className="font-horror text-3xl text-purple-400">#{playerEntry.rank}</p>
+                  <p className="font-horror text-3xl text-purple-400">#{playerRank.rank}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="font-vt323 text-sm text-gray-400">SCORE</p>
-                <p className="font-vt323 text-2xl text-yellow-400">{playerEntry.score.toLocaleString()}</p>
+                <p className="font-vt323 text-2xl text-yellow-400">{playerRank.score.toLocaleString()}</p>
               </div>
             </div>
           </div>
         )}
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <p className="font-vt323 text-gray-400 text-lg animate-pulse">LOADING LEADERBOARD...</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {error && (
+          <div className="text-center py-8">
+            <p className="font-vt323 text-red-400 text-lg">{error}</p>
+          </div>
+        )}
+
         {/* Leaderboard table */}
-        <div className="bg-black/80 border border-red-900/50 rounded-lg overflow-hidden">
-          <ScrollArea className="h-[500px]">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-red-900/50 hover:bg-transparent">
-                  <TableHead className="font-vt323 text-red-400 text-center w-20">RANK</TableHead>
-                  <TableHead className="font-vt323 text-red-400">NAME</TableHead>
-                  <TableHead className="font-vt323 text-red-400">ROLL NO</TableHead>
-                  <TableHead className="font-vt323 text-red-400 text-right">SCORE</TableHead>
-                  <TableHead className="font-vt323 text-red-400 text-center">PORTALS</TableHead>
-                  <TableHead className="font-vt323 text-red-400 text-right">TIME</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaderboardData.map((entry) => (
-                  <TableRow 
-                    key={`${entry.rank}-${entry.name}`}
-                    data-testid={`leaderboard-row-${entry.rank}`}
-                    className={`
-                      border-b border-gray-900/50 transition-colors
-                      ${isTopTen(entry.rank) ? 'leaderboard-top' : ''}
-                      ${isCurrentPlayer(entry.name) ? 'bg-purple-950/30 border-purple-600' : 'hover:bg-red-950/20'}
-                    `}
-                  >
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center">
-                        {getRankIcon(entry.rank)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`font-vt323 text-lg ${
-                        isCurrentPlayer(entry.name) ? 'text-purple-300' : 
-                        isTopTen(entry.rank) ? 'text-red-400' : 'text-gray-300'
-                      }`}>
-                        {entry.name}
-                        {isCurrentPlayer(entry.name) && (
-                          <span className="ml-2 text-xs text-purple-400">(YOU)</span>
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-code text-sm text-gray-500">{entry.rollNo}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={`font-vt323 text-lg ${
-                        isTopTen(entry.rank) ? 'text-yellow-400' : 'text-gray-400'
-                      }`}>
-                        {entry.score.toLocaleString()}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="font-vt323 text-lg text-red-400">{entry.portalsCleared}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="font-code text-sm text-gray-500">
-                        {formatLongTime(entry.timeSurvived)}
-                      </span>
-                    </TableCell>
+        {!isLoading && !error && (
+          <div className="bg-black/80 border border-red-900/50 rounded-lg overflow-hidden">
+            <ScrollArea className="h-[500px]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-red-900/50 hover:bg-transparent">
+                    <TableHead className="font-vt323 text-red-400 text-center w-20">RANK</TableHead>
+                    <TableHead className="font-vt323 text-red-400">USERNAME</TableHead>
+                    <TableHead className="font-vt323 text-red-400 text-right">SCORE</TableHead>
+                    <TableHead className="font-vt323 text-red-400 text-center">PORTALS</TableHead>
+                    <TableHead className="font-vt323 text-red-400 text-right">TIME</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {leaderboardData.length > 0 ? (
+                    leaderboardData.map((entry) => (
+                      <TableRow 
+                        key={`${entry.rank}-${entry.username}`}
+                        data-testid={`leaderboard-row-${entry.rank}`}
+                        className={`
+                          border-b border-gray-900/50 transition-colors
+                          ${isTopTen(entry.rank) ? 'leaderboard-top' : ''}
+                          ${isCurrentPlayer(entry.username) ? 'bg-purple-950/30 border-purple-600' : 'hover:bg-red-950/20'}
+                        `}
+                      >
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            {getRankIcon(entry.rank)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`font-vt323 text-lg ${
+                            isCurrentPlayer(entry.username) ? 'text-purple-300' : 
+                            isTopTen(entry.rank) ? 'text-red-400' : 'text-gray-300'
+                          }`}>
+                            {entry.username}
+                            {isCurrentPlayer(entry.username) && (
+                              <span className="ml-2 text-xs text-purple-400">(YOU)</span>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className={`font-vt323 text-lg ${
+                            isTopTen(entry.rank) ? 'text-yellow-400' : 'text-gray-400'
+                          }`}>
+                            {entry.score.toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="font-vt323 text-lg text-red-400">{entry.portalsCleared}</span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="font-code text-sm text-gray-500">
+                            {formatTime(entry.timeSurvived)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan="5" className="text-center py-8">
+                        <p className="font-vt323 text-gray-500">NO PLAYERS HAVE COMPLETED THE GAME YET</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
+        )}
 
         {/* Footer info */}
         <div className="mt-6 flex justify-between items-center text-gray-600 font-code text-xs">
