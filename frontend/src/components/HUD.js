@@ -14,7 +14,7 @@ const HUD = () => {
       {/* Top decorative line */}
       <div className="h-px bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
       
-      <div className="px-6 py-3 flex items-center justify-between gap-8 text-xs">
+      <div className="px-6 py-3 flex items-center justify-around gap-12 text-xs">
         {/* Health */}
         <div data-testid="health-display" className="flex items-center gap-2">
           <span className="text-gray-500 font-code uppercase tracking-widest">Health</span>
@@ -55,8 +55,8 @@ const HUD = () => {
           </p>
         </div>
 
-        {/* Time Left - Right aligned */}
-        <div data-testid="time-display" className="flex items-center gap-2 ml-auto">
+        {/* Time Left */}
+        <div data-testid="time-display" className="flex items-center gap-2">
           <Clock className={`w-4 h-4 ${globalTimeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`} />
           <span className="text-gray-500 font-code uppercase tracking-widest">Time Left</span>
           <p className={`font-code font-bold ${

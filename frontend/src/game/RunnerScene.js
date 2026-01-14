@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import playerSprite from '../assets/sprites/characters/player.png';
 
 export default class RunnerScene extends Phaser.Scene {
   constructor() {
@@ -18,6 +19,11 @@ export default class RunnerScene extends Phaser.Scene {
     this.onPortalHit = null;
     this.onGameTick = null;
     this.particles = null;
+    this.ambientParticles = null;
+    this.portalParticles = null;
+    this.playerGlow = null;
+    this.playerShadow = null;
+    this.lastHitFlash = 0;
   }
 
   init(data) {
@@ -28,64 +34,65 @@ export default class RunnerScene extends Phaser.Scene {
   }
 
   preload() {
-    // Create player sprite (pixel art style running character)
-    this.createPlayerSprite();
+    // Load player sprite sheet (horizontal strip with 8 frames)
+    this.load.spritesheet('player', playerSprite, {
+      frameWidth: 125,
+      frameHeight: 250
+    });
+    
+    // Create player glow sprite
+    this.createPlayerGlowSprite();
     
     // Create portal sprite (red glowing rift)
     this.createPortalSprite();
     
+    // Create portal glow rings
+    this.createPortalGlowRings();
+    
     // Create ground texture
     this.createGroundTexture();
     
-    // Create particle texture
-    this.createParticleTexture();
+    // Create particle textures
+    this.createParticleTextures();
   }
 
-  createPlayerSprite() {
+
+
+  createPlayerGlowSprite() {
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
     
-    // Colorful pixel art character - 32x48
-    const colors = {
-      skin: 0xffcc99,
-      hair: 0x8b3a3a,
-      shirt: 0xff3333,
-      pants: 0x1a3d6e,
-      shoes: 0x1a1a1a,
-    };
+    // Glow outline around player - 32x48
+    graphics.fillStyle(0xff0000, 0);
+    graphics.fillRect(0, 0, 32, 48);
+    
+    // Outer red glow
+    graphics.lineStyle(3, 0xff0000, 0.4);
+    graphics.strokeRect(2, 2, 28, 44);
+    
+    // Inner glow edge
+    graphics.lineStyle(1, 0xff4444, 0.2);
+    graphics.strokeRect(1, 1, 30, 46);
 
-    // Hair
-    graphics.fillStyle(colors.hair);
-    graphics.fillRect(8, 0, 16, 8);
-    
-    // Face
-    graphics.fillStyle(colors.skin);
-    graphics.fillRect(8, 8, 16, 12);
-    
-    // Eyes
-    graphics.fillStyle(0x000000);
-    graphics.fillRect(11, 11, 3, 3);
-    graphics.fillRect(18, 11, 3, 3);
-    
-    // Body/Shirt - Red
-    graphics.fillStyle(colors.shirt);
-    graphics.fillRect(6, 20, 20, 14);
-    
-    // Arms - Skin
-    graphics.fillStyle(colors.skin);
-    graphics.fillRect(2, 20, 4, 10);
-    graphics.fillRect(26, 20, 4, 10);
-    
-    // Pants - Blue
-    graphics.fillStyle(colors.pants);
-    graphics.fillRect(8, 34, 7, 10);
-    graphics.fillRect(17, 34, 7, 10);
-    
-    // Shoes
-    graphics.fillStyle(colors.shoes);
-    graphics.fillRect(6, 44, 9, 4);
-    graphics.fillRect(17, 44, 9, 4);
+    graphics.generateTexture('player_glow', 32, 48);
+    graphics.destroy();
+  }
 
-    graphics.generateTexture('player', 32, 48);
+  createPortalGlowRings() {
+    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    
+    // Rotating ring 1 (outer)
+    graphics.lineStyle(2, 0xff0000, 0.6);
+    graphics.strokeCircle(40, 50, 45);
+    
+    // Rotating ring 2 (middle)
+    graphics.lineStyle(1.5, 0xff3333, 0.4);
+    graphics.strokeCircle(40, 50, 30);
+    
+    // Rotating ring 3 (inner)
+    graphics.lineStyle(1, 0xff6666, 0.3);
+    graphics.strokeCircle(40, 50, 20);
+
+    graphics.generateTexture('portal_rings', 80, 100);
     graphics.destroy();
   }
 
@@ -152,14 +159,20 @@ export default class RunnerScene extends Phaser.Scene {
     graphics.destroy();
   }
 
-  createParticleTexture() {
+  createParticleTextures() {
+    // Small red particle
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-    
     graphics.fillStyle(0xff0000, 0.8);
     graphics.fillCircle(4, 4, 4);
-    
     graphics.generateTexture('particle', 8, 8);
     graphics.destroy();
+    
+    // Larger glow particle for portal
+    const graphicsGlow = this.make.graphics({ x: 0, y: 0, add: false });
+    graphicsGlow.fillStyle(0xff0000, 0.6);
+    graphics.fillCircle(6, 6, 6);
+    graphicsGlow.generateTexture('particle_glow', 12, 12);
+    graphicsGlow.destroy();
   }
 
   create() {
@@ -186,12 +199,35 @@ export default class RunnerScene extends Phaser.Scene {
     groundCollider.setVisible(false);
     groundCollider.refreshBody();
     
+    // Player shadow - use rectangle instead
+    this.playerShadow = this.add.rectangle(150, height - 50, 40, 4, 0x000000, 0.5);
+    
     // Player
     this.player = this.physics.add.sprite(150, height - 100, 'player');
     this.player.setCollideWorldBounds(true);
     this.player.setBounce(0.1);
     this.player.setGravityY(300);
-    this.player.setScale(1.2);
+    this.player.setScale(0.8); // Adjusted for new frame size
+    
+    // Create player walk animation
+    this.anims.create({
+      key: 'player-walk',
+      frames: this.anims.generateFrameNumbers('player', {
+        start: 0,
+        end: 7
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+    
+    // Play walk animation
+    this.player.play('player-walk');
+    
+    // Player glow layer
+    this.playerGlow = this.add.sprite(this.player.x, this.player.y, 'player_glow');
+    this.playerGlow.setScale(0.8);
+    this.playerGlow.setBlendMode(Phaser.BlendModes.ADD);
+    this.playerGlow.alpha = 0.3;
     
     // Portals group
     this.portals = this.physics.add.group({
@@ -208,38 +244,23 @@ export default class RunnerScene extends Phaser.Scene {
     this.lastSpeedIncreaseTime = this.time.now;
     this.isGameActive = true;
     
-    // Running animation (bobbing)
-    this.tweens.add({
-      targets: this.player,
-      y: this.player.y - 5,
-      duration: 200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    
     // Add fog layers
     this.createFogLayers();
+    
+    // Create particle emitters
+    this.createParticleEmitters();
   }
 
   createAtmosphericParticles() {
     const { width, height } = this.scale;
     
-    // Create floating particles
+    // Create floating particles - static only, no tweening
     for (let i = 0; i < 30; i++) {
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(0, height);
-      const particle = this.add.circle(x, y, Phaser.Math.Between(1, 3), 0xff0000, 0.3);
-      
-      this.tweens.add({
-        targets: particle,
-        x: particle.x + Phaser.Math.Between(-100, 100),
-        y: particle.y + Phaser.Math.Between(-50, 50),
-        alpha: { from: 0.3, to: 0 },
-        duration: Phaser.Math.Between(3000, 6000),
-        repeat: -1,
-        yoyo: true,
-      });
+      const particle = this.add.circle(x, y, Phaser.Math.Between(1, 3), 0xff0000, 0.2);
+      particle.setBlendMode(Phaser.BlendModes.ADD);
+      particle.setDepth(1);
     }
   }
 
@@ -255,10 +276,37 @@ export default class RunnerScene extends Phaser.Scene {
     fogTop.setDepth(5);
   }
 
+  createParticleEmitters() {
+    // Create ambient particles - static background effect
+    this.ambientParticles = [];
+    
+    // Just add some subtle background particles without tweening
+    for (let i = 0; i < 15; i++) {
+      const x = Phaser.Math.Between(0, this.scale.width);
+      const y = Phaser.Math.Between(0, this.scale.height);
+      const particle = this.add.circle(x, y, Phaser.Math.Between(1, 2), 0xff0000, 0.2);
+      particle.setBlendMode(Phaser.BlendModes.ADD);
+      particle.setDepth(2);
+      
+      this.ambientParticles.push(particle);
+    }
+  }
+
+
+
   update(time, delta) {
     if (!this.isGameActive) return;
 
     const effectiveSpeed = this.currentSpeed * this.speedMultiplier;
+    
+    // Update player glow and shadow positions
+    if (this.playerGlow && this.player) {
+      this.playerGlow.setPosition(this.player.x, this.player.y);
+    }
+    
+    if (this.playerShadow && this.player) {
+      this.playerShadow.setPosition(this.player.x, this.player.y + 50);
+    }
     
     // Move ground tiles
     this.groundTiles.forEach(tile => {
@@ -272,8 +320,22 @@ export default class RunnerScene extends Phaser.Scene {
     this.portals.getChildren().forEach(portal => {
       portal.x -= effectiveSpeed * (delta / 1000);
       
+      // Update glow elements position
+      if (portal.glowRings) {
+        portal.glowRings.setPosition(portal.x, portal.y);
+      }
+      if (portal.glowCircle) {
+        portal.glowCircle.setPosition(portal.x, portal.y);
+      }
+      
       // Remove if off screen
       if (portal.x < -100) {
+        if (portal.glowRings) {
+          portal.glowRings.destroy();
+        }
+        if (portal.glowCircle) {
+          portal.glowCircle.destroy();
+        }
         portal.destroy();
       }
     });
@@ -305,6 +367,18 @@ export default class RunnerScene extends Phaser.Scene {
     portal.setScale(0.8);
     portal.setSize(40, 80);
     
+    // Create portal glow rings
+    const rings = this.add.sprite(portal.x, portal.y, 'portal_rings');
+    rings.setScale(0.8);
+    rings.setBlendMode(Phaser.BlendModes.ADD);
+    rings.alpha = 0.5;
+    portal.glowRings = rings;
+    
+    // Portal pulsing glow
+    const portalGlow = this.add.circle(portal.x, portal.y, 45, 0xff0000, 0.15);
+    portalGlow.setBlendMode(Phaser.BlendModes.ADD);
+    portal.glowCircle = portalGlow;
+    
     // Add glow effect
     this.tweens.add({
       targets: portal,
@@ -312,6 +386,23 @@ export default class RunnerScene extends Phaser.Scene {
       scaleY: { from: 0.8, to: 0.9 },
       alpha: { from: 0.8, to: 1 },
       duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+    
+    // Rotate the glow rings
+    this.tweens.add({
+      targets: rings,
+      rotation: Math.PI * 2,
+      duration: 3000,
+      repeat: -1,
+    });
+    
+    // Pulse the glow circle (alpha only, no radius tweening)
+    this.tweens.add({
+      targets: portalGlow,
+      alpha: { from: 0.3, to: 0.05 },
+      duration: 600,
       yoyo: true,
       repeat: -1,
     });
@@ -328,6 +419,14 @@ export default class RunnerScene extends Phaser.Scene {
 
   handlePortalCollision(player, portal) {
     if (!this.isGameActive) return;
+    
+    // Clean up glow elements
+    if (portal.glowRings) {
+      portal.glowRings.destroy();
+    }
+    if (portal.glowCircle) {
+      portal.glowCircle.destroy();
+    }
     
     // Remove the portal
     portal.destroy();

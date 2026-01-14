@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import Phaser from 'phaser';
 import RunnerScene from '../game/RunnerScene';
+import UIScene from '../game/UIScene';
 import { useGame, INITIAL_SPEED } from '../context/GameContext';
 import { getRandomQuestion } from '../data/mockData';
 
 const PhaserGame = () => {
   const gameContainerRef = useRef(null);
   const gameInstanceRef = useRef(null);
+  const uiSceneRef = useRef(null);
   const { 
     phaserGameRef,
     gameStatus,
@@ -17,6 +19,10 @@ const PhaserGame = () => {
     setCurrentQuestion,
     setShowQuestionOverlay,
     pauseGame,
+    health,
+    score,
+    portalsCleared,
+    globalTimeLeft,
   } = useGame();
 
   // Handle portal collision
@@ -32,6 +38,13 @@ const PhaserGame = () => {
   const onGameTick = useCallback((deltaSeconds) => {
     updateGlobalTime(deltaSeconds);
   }, [updateGlobalTime]);
+
+  // Format time for display
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Initialize Phaser game
   useEffect(() => {
@@ -55,7 +68,7 @@ const PhaserGame = () => {
           debug: false,
         },
       },
-      scene: RunnerScene,
+      scene: [RunnerScene, UIScene],
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -68,13 +81,18 @@ const PhaserGame = () => {
     gameInstanceRef.current = game;
     phaserGameRef.current = game;
 
-    // Pass callbacks to scene
+    // Pass callbacks to scenes
     game.events.once('ready', () => {
-      const scene = game.scene.scenes[0];
-      if (scene) {
-        scene.onPortalHit = onPortalHit;
-        scene.onGameTick = onGameTick;
-        scene.currentSpeed = INITIAL_SPEED;
+      const runnerScene = game.scene.scenes[0];
+      if (runnerScene) {
+        runnerScene.onPortalHit = onPortalHit;
+        runnerScene.onGameTick = onGameTick;
+        runnerScene.currentSpeed = INITIAL_SPEED;
+      }
+
+      const uiScene = game.scene.scenes[1];
+      if (uiScene) {
+        uiSceneRef.current = uiScene;
       }
     });
 
@@ -133,6 +151,20 @@ const PhaserGame = () => {
       scene.setSpeedMultiplier(speedMultiplier);
     }
   }, [speedMultiplier]);
+
+  // Update UI HUD with game data
+  useEffect(() => {
+    if (uiSceneRef.current) {
+      const difficultyName = difficulty?.name || 'EASY';
+      uiSceneRef.current.updateGameData({
+        health,
+        score,
+        portalsCleared,
+        timeLeft: formatTime(globalTimeLeft),
+        difficulty: difficultyName,
+      });
+    }
+  }, [health, score, portalsCleared, globalTimeLeft, difficulty]);
 
   return (
     <div 

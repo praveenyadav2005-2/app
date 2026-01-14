@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HUD from '../components/HUD';
 import PhaserGame from '../components/PhaserGame';
 import QuestionOverlay from '../components/QuestionOverlay';
 import ResultOverlay from '../components/ResultOverlay';
+import HUD from '../components/HUD';
 import { useGame } from '../context/GameContext';
 import { resetUsedQuestions } from '../data/mockData';
 
@@ -68,16 +68,16 @@ const GameScreen = () => {
       data-testid="game-screen"
       className="min-h-screen bg-black relative overflow-hidden"
     >
+      {/* HUD Bar */}
+      <HUD />
+      
       {/* Background gradient effect */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-red-950/10 via-black to-red-950/5"></div>
       </div>
 
-      {/* HUD */}
-      <HUD />
-
       {/* Main Game Container */}
-      <div className="pt-20 pb-6 px-4 h-[calc(100vh-80px)] flex flex-col items-center justify-center relative z-10">
+      <div className="pt-0 pb-6 px-4 h-[100vh] flex flex-col items-center justify-center relative z-10">
         {/* Dimension Status - Above border */}
         <div className="mb-6">
           <p className="font-vt323 text-red-500 text-sm tracking-widest text-center drop-shadow-lg drop-shadow-red-600/50">

@@ -9,7 +9,7 @@ export const INITIAL_SPEED = 200;
 export const SPEED_INCREMENT = 20;
 export const SPEED_INCREMENT_INTERVAL = 30000; // 30 seconds
 export const PORTAL_SPAWN_INTERVAL = 8000; // 8 seconds
-export const GLOBAL_TIME_LIMIT = 90 * 60; // 90 minutes in seconds
+export const GLOBAL_TIME_LIMIT = 2 * 60 * 60; // 2 hours in seconds
 
 // Difficulty settings
 export const DIFFICULTY = {
@@ -30,6 +30,41 @@ export const SCORING = {
 export const GameProvider = ({ children }) => {
   // Track last known username to detect changes
   const lastUsernameRef = useRef(localStorage.getItem('username') || '');
+  const currentUsername = localStorage.getItem('username') || '';
+  
+  // Helper to get user-specific game state key
+  const getGameStateKey = useCallback((username) => {
+    return `gameState_${username}`;
+  }, []);
+  
+  // Helper to load game state from localStorage (user-specific)
+  const loadGameState = useCallback(() => {
+    if (!currentUsername) return null;
+    const key = getGameStateKey(currentUsername);
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to load game state:', e);
+        return null;
+      }
+    }
+    return null;
+  }, [currentUsername, getGameStateKey]);
+  
+  // Helper to save game state to localStorage (user-specific)
+  const saveGameState = useCallback((state) => {
+    if (!currentUsername) return;
+    const key = getGameStateKey(currentUsername);
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch (e) {
+      console.error('Failed to save game state:', e);
+    }
+  }, [currentUsername, getGameStateKey]);
+  
+  const savedState = loadGameState();
   
   // Player info
   const [userId, setUserId] = useState(localStorage.getItem('userId') || '');
@@ -39,15 +74,17 @@ export const GameProvider = ({ children }) => {
   const [playerId, setPlayerId] = useState(localStorage.getItem('username') || '');
   const [playerPassword, setPlayerPassword] = useState('');
   
-  // Game state
-  const [gameStatus, setGameStatus] = useState('idle'); // idle, playing, paused, ended
-  const [health, setHealth] = useState(INITIAL_HEALTH);
-  const [score, setScore] = useState(0);
-  const [portalsCleared, setPortalsCleared] = useState(0);
-  const [difficulty, setDifficulty] = useState(DIFFICULTY.EASY);
-  const [globalTimeLeft, setGlobalTimeLeft] = useState(GLOBAL_TIME_LIMIT);
-  const [timeSurvived, setTimeSurvived] = useState(0);
-  const [currentSpeed, setCurrentSpeed] = useState(INITIAL_SPEED);
+  // Game state - load from localStorage if available
+  const [gameStatus, setGameStatus] = useState(savedState?.gameStatus || 'idle');
+  const [health, setHealth] = useState(savedState?.health ?? INITIAL_HEALTH);
+  const [score, setScore] = useState(savedState?.score ?? 0);
+  const [portalsCleared, setPortalsCleared] = useState(savedState?.portalsCleared ?? 0);
+  const [bonusesCleared, setBonusesCleared] = useState(savedState?.bonusesCleared ?? 0);
+  const [obstaclesHit, setObstaclesHit] = useState(savedState?.obstaclesHit ?? 0);
+  const [difficulty, setDifficulty] = useState(savedState?.difficulty || DIFFICULTY.EASY);
+  const [globalTimeLeft, setGlobalTimeLeft] = useState(savedState?.globalTimeLeft ?? GLOBAL_TIME_LIMIT);
+  const [timeSurvived, setTimeSurvived] = useState(savedState?.timeSurvived ?? 0);
+  const [currentSpeed, setCurrentSpeed] = useState(savedState?.currentSpeed ?? INITIAL_SPEED);
   
   // Question state
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -62,6 +99,54 @@ export const GameProvider = ({ children }) => {
   
   // Phaser game reference
   const phaserGameRef = useRef(null);
+
+  // Function to reset all game state - MUST be defined before useEffect that uses it
+  const resetGameState = useCallback(() => {
+    console.log('🔄 [GameContext] Resetting all game state');
+    setGameStatus('idle');
+    setHealth(INITIAL_HEALTH);
+    setScore(0);
+    setPortalsCleared(0);
+    setBonusesCleared(0);
+    setObstaclesHit(0);
+    setDifficulty(DIFFICULTY.EASY);
+    setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
+    setTimeSurvived(0);
+    setCurrentSpeed(INITIAL_SPEED);
+    setActivePowerUps([]);
+    setSpeedMultiplier(1);
+    setScoreMultiplier(1);
+    setShowQuestionOverlay(false);
+    setShowResultOverlay(false);
+    setCurrentQuestion(null);
+    setLastResult(null);
+    // Clear saved game state for current user
+    if (currentUsername) {
+      const key = getGameStateKey(currentUsername);
+      localStorage.removeItem(key);
+    }
+  }, [currentUsername, getGameStateKey]);
+
+  // Auto-save game state whenever it changes
+  React.useEffect(() => {
+    if (gameStatus === 'playing' || gameStatus === 'paused') {
+      const stateToSave = {
+        gameStatus,
+        health,
+        score,
+        portalsCleared,
+        bonusesCleared,
+        obstaclesHit,
+        difficulty,
+        globalTimeLeft,
+        timeSurvived,
+        currentSpeed,
+        speedMultiplier,
+        scoreMultiplier,
+      };
+      saveGameState(stateToSave);
+    }
+  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, saveGameState]);
 
   // Check for username changes on every render
   React.useEffect(() => {
@@ -94,27 +179,7 @@ export const GameProvider = ({ children }) => {
         resetGameState();
       }
     }
-  });
-
-  // Function to reset all game state
-  const resetGameState = useCallback(() => {
-    console.log('🔄 [GameContext] Resetting all game state');
-    setGameStatus('idle');
-    setHealth(INITIAL_HEALTH);
-    setScore(0);
-    setPortalsCleared(0);
-    setDifficulty(DIFFICULTY.EASY);
-    setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
-    setTimeSurvived(0);
-    setCurrentSpeed(INITIAL_SPEED);
-    setActivePowerUps([]);
-    setSpeedMultiplier(1);
-    setScoreMultiplier(1);
-    setShowQuestionOverlay(false);
-    setShowResultOverlay(false);
-    setCurrentQuestion(null);
-    setLastResult(null);
-  }, []);
+  }, [resetGameState]);
 
   // Listen for explicit reset events
   React.useEffect(() => {
@@ -134,6 +199,8 @@ export const GameProvider = ({ children }) => {
     setHealth(INITIAL_HEALTH);
     setScore(0);
     setPortalsCleared(0);
+    setBonusesCleared(0);
+    setObstaclesHit(0);
     setDifficulty(DIFFICULTY.EASY);
     setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
     setTimeSurvived(0);
@@ -142,7 +209,12 @@ export const GameProvider = ({ children }) => {
     setSpeedMultiplier(1);
     setScoreMultiplier(1);
     setGameStatus('playing');
-  }, []);
+    // Clear previous game state from localStorage for current user
+    if (currentUsername) {
+      const key = getGameStateKey(currentUsername);
+      localStorage.removeItem(key);
+    }
+  }, [currentUsername, getGameStateKey]);
 
   // Pause game (for question overlay)
   const pauseGame = useCallback(() => {
@@ -332,8 +404,14 @@ export const GameProvider = ({ children }) => {
     // Game state
     gameStatus,
     health,
+    setHealth,
     score,
+    setScore,
     portalsCleared,
+    bonusesCleared,
+    setBonusesCleared,
+    obstaclesHit,
+    setObstaclesHit,
     difficulty,
     globalTimeLeft,
     timeSurvived,
