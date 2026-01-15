@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import playerSprite from '../assets/sprites/characters/player.png';
+import demogorgonSprite from '../assets/sprites/characters/demogorgon.png';
 
 export default class RunnerScene extends Phaser.Scene {
   constructor() {
@@ -7,6 +8,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.player = null;
     this.ground = null;
     this.portals = null;
+    this.demogorgons = null;
     this.background = null;
     this.currentSpeed = 200;
     this.speedMultiplier = 1;
@@ -18,17 +20,23 @@ export default class RunnerScene extends Phaser.Scene {
     this.isGameActive = false;
     this.onPortalHit = null;
     this.onGameTick = null;
+    this.onDemogorgonHit = null;
     this.particles = null;
     this.ambientParticles = null;
     this.portalParticles = null;
     this.playerGlow = null;
     this.playerShadow = null;
     this.lastHitFlash = 0;
+    this.lastEntityDestroyedTime = 0;
+    this.entitySpawnDelay = 1500; // Delay before spawning next entity
+    this.currentEntityType = null; // Track if 'portal' or 'demogorgon' is active
+    this.lastSpawnedType = 'demogorgon'; // Start with portal (alternate from demogorgon)
   }
 
   init(data) {
     this.onPortalHit = data.onPortalHit || (() => {});
     this.onGameTick = data.onGameTick || (() => {});
+    this.onDemogorgonHit = data.onDemogorgonHit || (() => {});
     this.currentSpeed = data.initialSpeed || 200;
     this.speedMultiplier = 1;
   }
@@ -39,6 +47,9 @@ export default class RunnerScene extends Phaser.Scene {
       frameWidth: 125,
       frameHeight: 250
     });
+    
+    // Load demogorgon sprite
+    this.load.image('demogorgon', demogorgonSprite);
     
     // Create player glow sprite
     this.createPlayerGlowSprite();
@@ -192,12 +203,11 @@ export default class RunnerScene extends Phaser.Scene {
       this.groundTiles.push(tile);
     }
     
-    // Physics ground
+    // Physics ground - aligned with visual ground tiles
     this.ground = this.physics.add.staticGroup();
-    const groundCollider = this.ground.create(width / 2, height - 20, null);
-    groundCollider.setSize(width * 2, 40);
+    const groundCollider = this.ground.create(width / 2, height - 45, null);
+    groundCollider.body.setSize(width * 2, 50);
     groundCollider.setVisible(false);
-    groundCollider.refreshBody();
     
     // Player shadow - use rectangle instead
     this.playerShadow = this.add.rectangle(150, height - 50, 40, 4, 0x000000, 0.5);
@@ -208,6 +218,9 @@ export default class RunnerScene extends Phaser.Scene {
     this.player.setBounce(0.1);
     this.player.setGravityY(300);
     this.player.setScale(0.8); // Adjusted for new frame size
+    
+    // Track if player is touching ground for jumping
+    this.isPlayerOnGround = false;
     
     // Create player walk animation
     this.anims.create({
@@ -234,14 +247,24 @@ export default class RunnerScene extends Phaser.Scene {
       allowGravity: false,
     });
     
+    // Demogorgons group
+    this.demogorgons = this.physics.add.group({
+      allowGravity: false,
+    });
+    
     // Collisions
     this.physics.add.collider(this.player, this.ground);
     this.physics.add.overlap(this.player, this.portals, this.handlePortalCollision, null, this);
+    this.physics.add.collider(this.player, this.demogorgons, this.handleDemogorgonCollision, null, this);
+    
+    // Setup keyboard input for jumping
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
     // Initialize timers
     this.gameStartTime = this.time.now;
     this.lastPortalTime = this.time.now;
     this.lastSpeedIncreaseTime = this.time.now;
+    this.lastEntityDestroyedTime = this.time.now;
     this.isGameActive = true;
     
     // Add fog layers
@@ -297,6 +320,15 @@ export default class RunnerScene extends Phaser.Scene {
   update(time, delta) {
     if (!this.isGameActive) return;
 
+    // Check if player is touching the ground
+    this.isPlayerOnGround = this.player.body.touching.down;
+    
+    // Handle jumping with space bar - allow jump anytime
+    if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      console.log('🚀 JUMP ACTIVATED - Player Y:', this.player.y.toFixed(2));
+      this.player.setVelocityY(-450);
+    }
+
     const effectiveSpeed = this.currentSpeed * this.speedMultiplier;
     
     // Update player glow and shadow positions
@@ -337,13 +369,35 @@ export default class RunnerScene extends Phaser.Scene {
           portal.glowCircle.destroy();
         }
         portal.destroy();
+        this.currentEntityType = null;
+        this.lastEntityDestroyedTime = time;
       }
     });
     
-    // Spawn portals
-    if (time - this.lastPortalTime > this.portalSpawnInterval) {
-      this.spawnPortal();
-      this.lastPortalTime = time;
+    // Move demogorgons
+    this.demogorgons.getChildren().forEach(demogorgon => {
+      demogorgon.x -= effectiveSpeed * (delta / 1000);
+      
+      // Remove if off screen
+      if (demogorgon.x < -100) {
+        demogorgon.destroy();
+        this.currentEntityType = null;
+        this.lastEntityDestroyedTime = time;
+      }
+    });
+    
+    // Spawn entities (portal or demogorgon) - only one at a time
+    if (this.currentEntityType === null && time - this.lastEntityDestroyedTime > this.entitySpawnDelay) {
+      // Alternate between portal and demogorgon
+      if (this.lastSpawnedType === 'demogorgon') {
+        this.spawnPortal();
+        this.currentEntityType = 'portal';
+        this.lastSpawnedType = 'portal';
+      } else {
+        this.spawnDemogorgon();
+        this.currentEntityType = 'demogorgon';
+        this.lastSpawnedType = 'demogorgon';
+      }
     }
     
     // Increase speed every 30 seconds
@@ -430,10 +484,45 @@ export default class RunnerScene extends Phaser.Scene {
     
     // Remove the portal
     portal.destroy();
+    this.currentEntityType = null;
+    this.lastEntityDestroyedTime = this.time.now;
     
     // Trigger portal hit callback
     if (this.onPortalHit) {
       this.onPortalHit();
+    }
+  }
+
+  spawnDemogorgon() {
+    const { width, height } = this.scale;
+    
+    const demogorgon = this.demogorgons.create(width + 50, height - 120, 'demogorgon');
+    demogorgon.setScale(0.2);
+    demogorgon.setSize(10, 12);
+    
+    // Add a pulsing scale effect
+    this.tweens.add({
+      targets: demogorgon,
+      scaleX: { from: 0.2, to: 0.22 },
+      scaleY: { from: 0.2, to: 0.22 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  handleDemogorgonCollision(player, demogorgon) {
+    if (!this.isGameActive) return;
+    
+    // Reduce score by 2
+    console.log('💀 DEMOGORGON HIT! Score reduced by 2');
+    demogorgon.destroy();
+    this.currentEntityType = null;
+    this.lastEntityDestroyedTime = this.time.now;
+    
+    // Trigger demogorgon hit callback
+    if (this.onDemogorgonHit) {
+      this.onDemogorgonHit();
     }
   }
 
