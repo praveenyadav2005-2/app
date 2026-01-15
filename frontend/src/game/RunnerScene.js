@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import playerSprite from '../assets/sprites/characters/player.png';
 import demogorgonSprite from '../assets/sprites/characters/demogorgon.png';
+import { ParticleMeshBackground } from './ParticleMeshBackground';
 
 export default class RunnerScene extends Phaser.Scene {
   constructor() {
@@ -10,6 +11,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.portals = null;
     this.demogorgons = null;
     this.background = null;
+    this.particleMeshBackground = null; // Add particle mesh background
     this.currentSpeed = 200;
     this.speedMultiplier = 1;
     this.lastPortalTime = 0;
@@ -189,8 +191,22 @@ export default class RunnerScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     
-    // Background - dark gradient
+    // Background - dark gradient (set depth -2 so particle mesh can render on top)
     this.background = this.add.rectangle(width / 2, height / 2, width, height, 0x050505);
+    this.background.setDepth(-2);
+    
+    // Create particle mesh background (depth -1, in front of background but behind gameplay)
+    this.particleMeshBackground = new ParticleMeshBackground(this, {
+      particleCount: Phaser.Math.Between(50, 80),
+      connectionThreshold: 100,
+      scrollSpeed: 30,
+      driftSpeed: 0.5,
+      driftAmount: 20,
+      particleColor: 0xff0000,
+      lineColor: 0xff0000,
+      baseAlpha: 0.4,
+      lineBaseAlpha: 0.3
+    });
     
     // Add atmospheric particles
     this.createAtmosphericParticles();
@@ -319,6 +335,11 @@ export default class RunnerScene extends Phaser.Scene {
 
   update(time, delta) {
     if (!this.isGameActive) return;
+
+    // Update particle mesh background
+    if (this.particleMeshBackground) {
+      this.particleMeshBackground.update(delta);
+    }
 
     // Check if player is touching the ground
     this.isPlayerOnGround = this.player.body.touching.down;
@@ -543,22 +564,34 @@ export default class RunnerScene extends Phaser.Scene {
 
   pauseGame() {
     this.isGameActive = false;
+    if (this.particleMeshBackground) {
+      this.particleMeshBackground.pause();
+    }
     this.physics.pause();
     this.tweens.pauseAll();
   }
 
   resumeGame() {
     this.isGameActive = true;
+    if (this.particleMeshBackground) {
+      this.particleMeshBackground.resume();
+    }
     this.physics.resume();
     this.tweens.resumeAll();
   }
 
   setSpeedMultiplier(multiplier) {
     this.speedMultiplier = multiplier;
+    if (this.particleMeshBackground) {
+      this.particleMeshBackground.setSpeedMultiplier(multiplier);
+    }
   }
 
   stopGame() {
     this.isGameActive = false;
+    if (this.particleMeshBackground) {
+      this.particleMeshBackground.destroy();
+    }
     this.physics.pause();
     this.tweens.pauseAll();
   }

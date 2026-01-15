@@ -110,14 +110,14 @@ const InstructionsScreen = () => {
 
         {/* Instructions grid */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Health */}
+          {/* Demogorgon */}
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Heart className="w-8 h-8 text-red-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-red-400 mb-2">HEALTH SYSTEM</h3>
+              <h3 className="font-vt323 text-xl text-red-400 mb-2">DEMOGORGON ATTACKS</h3>
               <p className="font-vt323 text-gray-400">
-                You start with 3 hearts. Wrong answers or timeouts summon the Demogorgon, costing you 1 heart.
-                Game ends at 0 health.
+                Wrong answers or timeouts summon the Demogorgon, reducing your score by 2 points.
+                <span className="block text-yellow-300 font-bold mt-1">Press SPACE BAR to dodge!</span>
               </p>
             </div>
           </div>
@@ -138,13 +138,11 @@ const InstructionsScreen = () => {
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Clock className="w-8 h-8 text-yellow-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-yellow-400 mb-2">TIME LIMITS</h3>
+              <h3 className="font-vt323 text-xl text-yellow-400 mb-2">GAME DURATION</h3>
               <p className="font-vt323 text-gray-400">
-                <span className="text-green-400">EASY: 10s</span> • 
-                <span className="text-orange-400"> MEDIUM: 20s</span> • 
-                <span className="text-red-400"> HARD: 30s</span>
-                <br />
-                Global time limit: 90 minutes
+                <span className="text-green-400">EASY: 20 minutes</span> • 
+                <span className="text-orange-400"> MEDIUM: 30 minutes</span> • 
+                <span className="text-red-400"> HARD: 40 minutes</span>
               </p>
             </div>
           </div>
@@ -153,13 +151,13 @@ const InstructionsScreen = () => {
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Zap className="w-8 h-8 text-yellow-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-yellow-400 mb-2">SCORING</h3>
+              <h3 className="font-vt323 text-xl text-yellow-400 mb-2">SCORING SYSTEM</h3>
               <p className="font-vt323 text-gray-400">
-                Correct: +100 pts | Fast solve: +50 bonus
+                <span className="text-green-400">EASY: +100 pts/answer</span>
                 <br />
-                <span className="text-yellow-400 font-bold">Correct: +100 pts</span>
+                <span className="text-orange-400">MEDIUM: +150 pts/answer</span>
                 <br />
-                Distance: +1 pt/second survived
+                <span className="text-red-400">HARD: +200 pts/answer</span>
               </p>
             </div>
           </div>
@@ -170,31 +168,28 @@ const InstructionsScreen = () => {
             <div>
               <h3 className="font-vt323 text-xl text-orange-400 mb-2">DIFFICULTY SCALING</h3>
               <p className="font-vt323 text-gray-400">
-                Portals 0-3: EASY
+                Portals 0-4: EASY
                 <br />
-                Portals 4-6: MEDIUM
+                Portals 5-10: MEDIUM
                 <br />
-                Portals 7+: HARD
+                Portals 11-14: HARD
               </p>
             </div>
           </div>
 
-          {/* Power-ups */}
+          {/* Health */}
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
-            <Gift className="w-8 h-8 text-purple-500 flex-shrink-0" />
+            <Heart className="w-8 h-8 text-red-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-purple-400 mb-2">POWER-UPS</h3>
+              <h3 className="font-vt323 text-xl text-red-400 mb-2">HEALTH SYSTEM</h3>
               <p className="font-vt323 text-gray-400">
-                Random drops on correct answers:
+                You start with <span className="text-red-500 font-bold">3 LIVES</span>. Each Demogorgon attack costs you 1 life.
                 <br />
-                🔷 Hawkins Stabilizer: Speed ×0.5
-                <br />
-                💚 Lab Med-Kit: +1 Health
-                <br />
-                ⚡ Signal Booster: 2× Score
+                Game ends when all 3 lives are lost. Survive all portals to win!
               </p>
             </div>
           </div>
+
         </div>
 
         {/* Important note */}

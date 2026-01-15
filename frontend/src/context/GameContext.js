@@ -14,8 +14,8 @@ export const GLOBAL_TIME_LIMIT = 2 * 60 * 60; // 2 hours in seconds
 // Difficulty settings
 export const DIFFICULTY = {
   EASY: { name: 'EASY', timeLimit: 1200, scoreBonus: 100 },
-  MEDIUM: { name: 'MEDIUM', timeLimit: 1800, scoreBonus: 100 },
-  HARD: { name: 'HARD', timeLimit: 2400, scoreBonus: 100 },
+  MEDIUM: { name: 'MEDIUM', timeLimit: 1800, scoreBonus: 150 },
+  HARD: { name: 'HARD', timeLimit: 2400, scoreBonus: 200 },
 };
 
 // Scoring rules
@@ -274,7 +274,12 @@ export const GameProvider = ({ children }) => {
     let powerUp = null;
     
     if (isCorrect) {
-      scoreDelta = SCORING.CORRECT * scoreMultiplier;
+      // Get difficulty-based score bonus
+      const difficultyObj = typeof difficulty === 'string' 
+        ? Object.values(DIFFICULTY).find(d => d.name === difficulty)
+        : difficulty;
+      const basePoints = difficultyObj?.scoreBonus || 100;
+      scoreDelta = basePoints * scoreMultiplier;
       
       const newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
