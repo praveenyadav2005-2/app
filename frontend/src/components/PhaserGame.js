@@ -5,10 +5,11 @@ import UIScene from '../game/UIScene';
 import { useGame, INITIAL_SPEED } from '../context/GameContext';
 import { getRandomQuestion } from '../data/mockData';
 
-const PhaserGame = () => {
+const PhaserGame = React.memo(() => {
   const gameContainerRef = useRef(null);
   const gameInstanceRef = useRef(null);
   const uiSceneRef = useRef(null);
+  const callbacksRef = useRef({ onPortalHit: null, onGameTick: null, onDemogorgonHit: null });
   const { 
     phaserGameRef,
     gameStatus,
@@ -40,6 +41,13 @@ const PhaserGame = () => {
     updateGlobalTime(deltaSeconds);
   }, [updateGlobalTime]);
 
+  // Keep callbacks in ref to avoid stale closures
+  useEffect(() => {
+    callbacksRef.current.onPortalHit = onPortalHit;
+    callbacksRef.current.onGameTick = onGameTick;
+    callbacksRef.current.onDemogorgonHit = handleDemogorgonHit;
+  }, [onPortalHit, onGameTick, handleDemogorgonHit]);
+
   // Format time for display
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -69,6 +77,9 @@ const PhaserGame = () => {
           debug: false,
         },
       },
+      audio: {
+        noAudio: true, // Disable audio to prevent AudioContext errors
+      },
       scene: [RunnerScene, UIScene],
       scale: {
         mode: Phaser.Scale.FIT,
@@ -82,13 +93,13 @@ const PhaserGame = () => {
     gameInstanceRef.current = game;
     phaserGameRef.current = game;
 
-    // Pass callbacks to scenes
+    // Pass callbacks to scenes using refs to get latest values
     game.events.once('ready', () => {
       const runnerScene = game.scene.scenes[0];
       if (runnerScene) {
-        runnerScene.onPortalHit = onPortalHit;
-        runnerScene.onDemogorgonHit = handleDemogorgonHit;
-        runnerScene.onGameTick = onGameTick;
+        runnerScene.onPortalHit = () => callbacksRef.current.onPortalHit?.();
+        runnerScene.onDemogorgonHit = () => callbacksRef.current.onDemogorgonHit?.();
+        runnerScene.onGameTick = (delta) => callbacksRef.current.onGameTick?.(delta);
         runnerScene.currentSpeed = INITIAL_SPEED;
       }
 
@@ -115,18 +126,8 @@ const PhaserGame = () => {
         phaserGameRef.current = null;
       }
     };
-  }, [phaserGameRef, onPortalHit, onGameTick]);
-
-  // Update scene callbacks when they change
-  useEffect(() => {
-    if (gameInstanceRef.current) {
-      const scene = gameInstanceRef.current.scene.scenes[0];
-      if (scene) {
-        scene.onPortalHit = onPortalHit;
-        scene.onGameTick = onGameTick;
-      }
-    }
-  }, [onPortalHit, onGameTick]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle game status changes
   useEffect(() => {
@@ -175,6 +176,6 @@ const PhaserGame = () => {
       className="w-full h-[400px] bg-black border-2 border-red-900/50 box-glow-red overflow-hidden"
     />
   );
-};
+});
 
 export default PhaserGame;

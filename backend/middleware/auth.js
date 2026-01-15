@@ -1,7 +1,17 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// SECURITY: Ensure JWT_SECRET is set in production
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ CRITICAL: JWT_SECRET must be set in production!');
+    process.exit(1);
+  } else {
+    console.warn('⚠️ WARNING: Using default JWT secret. Set JWT_SECRET in production!');
+  }
+}
+const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'dev-only-secret-do-not-use-in-prod';
 
 // Middleware to verify JWT token
 const authenticate = async (req, res, next) => {
@@ -17,7 +27,7 @@ const authenticate = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET);
     
     // Get user from database
     const user = await User.findById(decoded.userId).select('-password');
@@ -64,5 +74,5 @@ const checkGameNotCompleted = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, checkGameNotCompleted, JWT_SECRET };
+module.exports = { authenticate, checkGameNotCompleted, JWT_SECRET: EFFECTIVE_JWT_SECRET };
 

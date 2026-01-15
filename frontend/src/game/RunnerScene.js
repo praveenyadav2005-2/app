@@ -325,7 +325,6 @@ export default class RunnerScene extends Phaser.Scene {
     
     // Handle jumping with space bar - allow jump anytime
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-      console.log('🚀 JUMP ACTIVATED - Player Y:', this.player.y.toFixed(2));
       this.player.setVelocityY(-450);
       this.lastJumpTime = time; // Track jump time for collision avoidance
     }
@@ -410,7 +409,6 @@ export default class RunnerScene extends Phaser.Scene {
     // Call game tick for time updates
     if (this.onGameTick) {
       const deltaSeconds = delta / 1000;
-      console.log(`[RunnerScene.update] Calling onGameTick with delta: ${deltaSeconds}s, isGameActive: ${this.isGameActive}`);
       this.onGameTick(deltaSeconds);
     }
   }

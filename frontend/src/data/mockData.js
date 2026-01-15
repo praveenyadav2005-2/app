@@ -160,12 +160,56 @@ export const mockQuestions = {
   ],
 };
 
-// Track used questions per session
+// Import SecureStorage for encrypted localStorage
+import SecureStorage from '../utils/secureStorage';
+
+// Track used questions per session (also persisted per user in encrypted localStorage)
 let usedQuestions = new Set();
 
-// Reset used questions (call at game start)
+// Get user-specific key for answered questions
+const getAnsweredQuestionsKey = (username) => {
+  return `answeredQuestions_${username}`;
+};
+
+// Load answered questions from encrypted localStorage for current user
+export const loadAnsweredQuestions = () => {
+  const username = localStorage.getItem('username');
+  if (!username) return;
+  
+  const key = getAnsweredQuestionsKey(username);
+  const answeredIds = SecureStorage.getItem(key, username);
+  if (answeredIds && Array.isArray(answeredIds)) {
+    usedQuestions = new Set(answeredIds);
+    console.log(`📚 [Questions] Loaded ${usedQuestions.size} answered questions for ${username}`);
+  } else {
+    usedQuestions = new Set();
+  }
+};
+
+// Save answered questions to encrypted localStorage for current user
+const saveAnsweredQuestions = () => {
+  const username = localStorage.getItem('username');
+  if (!username) return;
+  
+  const key = getAnsweredQuestionsKey(username);
+  SecureStorage.setItem(key, [...usedQuestions], username);
+};
+
+// Reset used questions (call at game start for fresh start, or when user wants to replay all)
 export const resetUsedQuestions = () => {
+  // Don't reset - we want to keep track of answered questions across sessions
+  // Only call this if you want a completely fresh start
+};
+
+// Force reset all answered questions for current user
+export const forceResetAllQuestions = () => {
+  const username = localStorage.getItem('username');
+  if (username) {
+    const key = getAnsweredQuestionsKey(username);
+    SecureStorage.removeItem(key);
+  }
   usedQuestions = new Set();
+  console.log('🔄 [Questions] All questions reset');
 };
 
 // Get a random unused question based on difficulty
@@ -174,13 +218,15 @@ export const getRandomQuestion = (difficulty) => {
   const availableQuestions = questions.filter(q => !usedQuestions.has(q.id));
   
   if (availableQuestions.length === 0) {
-    // Reset if all questions used
-    questions.forEach(q => usedQuestions.delete(q.id));
+    // All questions in this difficulty have been answered
+    // Move to a random question from this difficulty (allow repeat)
+    console.log(`⚠️ [Questions] All ${difficulty} questions answered, allowing repeats`);
     return questions[Math.floor(Math.random() * questions.length)];
   }
   
   const question = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
   usedQuestions.add(question.id);
+  saveAnsweredQuestions(); // Persist to localStorage
   return question;
 };
 

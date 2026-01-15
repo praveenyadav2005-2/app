@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
@@ -67,9 +71,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Indexes for performance optimization
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
+// Indexes for performance optimization (username and email already indexed via unique: true)
 userSchema.index({ gameCompleted: 1, finalScore: -1 }); // For leaderboard sorting
 
 module.exports = mongoose.model('User', userSchema);

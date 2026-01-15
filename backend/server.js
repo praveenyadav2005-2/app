@@ -3,44 +3,57 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet()); // Adds security headers (XSS protection, content-type sniffing, etc.)
+
+// CORS configuration - restrict in production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || 'https://yourdomain.com'
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Body parser with size limit to prevent DOS
+app.use(express.json({ limit: '10kb' }));
 
 // Rate limiting for auth endpoints
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5,                    // 5 attempts per window
-  message: 'Too many login attempts, please try again later',
+  message: { success: false, message: 'Too many login attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3,                    // 3 registrations per hour
-  message: 'Too many registrations, please try again later',
+  max: 10,                   // 10 registrations per hour (increased for testing)
+  message: { success: false, message: 'Too many registrations, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,  // 1 minute
-  max: 30,                   // 30 requests per window
-  message: 'Too many requests, please try again later',
+  max: 60,                   // 60 requests per window (increased)
+  message: { success: false, message: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 // Database connection with connection pooling for scalability
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/enigma-game';
-console.log("✅ Using MONGODB_URI =", MONGODB_URI);
+// Note: Never log MONGODB_URI in production as it may contain credentials
 
 mongoose.connect(MONGODB_URI, {
   maxPoolSize: 50,        // Handle up to 1000 concurrent users

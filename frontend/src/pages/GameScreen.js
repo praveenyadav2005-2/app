@@ -5,7 +5,7 @@ import QuestionOverlay from '../components/QuestionOverlay';
 import ResultOverlay from '../components/ResultOverlay';
 import GameHUD from '../components/GameHUD';
 import { useGame } from '../context/GameContext';
-import { resetUsedQuestions } from '../data/mockData';
+import { loadAnsweredQuestions } from '../data/mockData';
 
 const GameScreen = () => {
   const navigate = useNavigate();
@@ -13,8 +13,6 @@ const GameScreen = () => {
   const gameStartedRef = React.useRef(false);
 
   const username = localStorage.getItem('username');
-
-  console.log(`[GameScreen RENDER] username: ${username}, gameStatus: ${gameStatus}, health: ${health}, globalTimeLeft: ${globalTimeLeft}, score: ${score}, portalsCleared: ${portalsCleared}`);
 
   // Initialize game on mount
   useEffect(() => {
@@ -37,9 +35,9 @@ const GameScreen = () => {
       sessionStorage.setItem('playerId', currentUsername);
     }
 
-    // Reset questions and start game
-    console.log('[GameScreen] Starting game for player:', playerId);
-    resetUsedQuestions();
+    // Load previously answered questions for this user
+    console.log('[GameScreen] Loading answered questions for player:', playerId);
+    loadAnsweredQuestions();
     startGame(playerId, playerPassword);
     gameStartedRef.current = true;
   }, [navigate, startGame]);
