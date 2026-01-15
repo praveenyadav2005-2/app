@@ -15,6 +15,7 @@ const PhaserGame = () => {
     difficulty,
     speedMultiplier,
     handlePortalHit,
+    handleDemogorgonHit,
     updateGlobalTime,
     setCurrentQuestion,
     setShowQuestionOverlay,
@@ -86,6 +87,7 @@ const PhaserGame = () => {
       const runnerScene = game.scene.scenes[0];
       if (runnerScene) {
         runnerScene.onPortalHit = onPortalHit;
+        runnerScene.onDemogorgonHit = handleDemogorgonHit;
         runnerScene.onGameTick = onGameTick;
         runnerScene.currentSpeed = INITIAL_SPEED;
       }

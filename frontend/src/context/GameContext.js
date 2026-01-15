@@ -13,17 +13,14 @@ export const GLOBAL_TIME_LIMIT = 2 * 60 * 60; // 2 hours in seconds
 
 // Difficulty settings
 export const DIFFICULTY = {
-  EASY: { name: 'EASY', timeLimit: 10, scoreBonus: 100 },
-  MEDIUM: { name: 'MEDIUM', timeLimit: 20, scoreBonus: 100 },
-  HARD: { name: 'HARD', timeLimit: 30, scoreBonus: 100 },
+  EASY: { name: 'EASY', timeLimit: 1200, scoreBonus: 100 },
+  MEDIUM: { name: 'MEDIUM', timeLimit: 1800, scoreBonus: 100 },
+  HARD: { name: 'HARD', timeLimit: 2400, scoreBonus: 100 },
 };
 
 // Scoring rules
 export const SCORING = {
   CORRECT: 100,
-  FAST_SOLVE_BONUS: 50,
-  WRONG: -50,
-  TIMEOUT: -75,
   DISTANCE_PER_SECOND: 1,
 };
 
@@ -258,6 +255,13 @@ export const GameProvider = ({ children }) => {
     setShowQuestionOverlay(true);
   }, [pauseGame]);
 
+  // Handle demogorgon collision - reduce score by 2
+  const handleDemogorgonHit = useCallback(() => {
+    setScore(prev => Math.max(0, prev - 2));
+    setObstaclesHit(prev => prev + 1);
+    console.log('[GameContext] Demogorgon hit - score reduced by 2');
+  }, []);
+
   // Submit answer
   const submitAnswer = useCallback((answer, timeRemaining, questionTimeLimit) => {
     const trimmedAnswer = answer.trim().toLowerCase();
@@ -271,9 +275,6 @@ export const GameProvider = ({ children }) => {
     
     if (isCorrect) {
       scoreDelta = SCORING.CORRECT * scoreMultiplier;
-      if (isFastSolve) {
-        scoreDelta += SCORING.FAST_SOLVE_BONUS;
-      }
       
       const newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
@@ -286,7 +287,6 @@ export const GameProvider = ({ children }) => {
         applyPowerUp(powerUp);
       }
     } else {
-      scoreDelta = SCORING.WRONG;
       newHealth = Math.max(0, health - 1);
       setHealth(newHealth);
     }
@@ -316,12 +316,11 @@ export const GameProvider = ({ children }) => {
   const handleTimeout = useCallback(() => {
     const newHealth = Math.max(0, health - 1);
     setHealth(newHealth);
-    setScore(prev => Math.max(0, prev + SCORING.TIMEOUT));
     
     const result = {
       correct: false,
       newHealth,
-      scoreDelta: SCORING.TIMEOUT,
+      scoreDelta: 0,
       powerUp: null,
       continueGame: newHealth > 0,
       timeout: true,
@@ -437,6 +436,7 @@ export const GameProvider = ({ children }) => {
     resumeGame,
     endGame,
     handlePortalHit,
+    handleDemogorgonHit,
     submitAnswer,
     handleTimeout,
     closeResultOverlay,

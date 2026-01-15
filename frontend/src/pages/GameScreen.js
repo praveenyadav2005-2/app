@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import PhaserGame from '../components/PhaserGame';
 import QuestionOverlay from '../components/QuestionOverlay';
 import ResultOverlay from '../components/ResultOverlay';
-import HUD from '../components/HUD';
+import GameHUD from '../components/GameHUD';
 import { useGame } from '../context/GameContext';
 import { resetUsedQuestions } from '../data/mockData';
 
 const GameScreen = () => {
   const navigate = useNavigate();
-  const { gameStatus, startGame, health, globalTimeLeft, score, portalsCleared, timeSurvived } = useGame();
+  const { gameStatus, startGame, health, globalTimeLeft, score, portalsCleared, timeSurvived, difficulty, maxPortals = 5 } = useGame();
   const gameStartedRef = React.useRef(false);
 
   const username = localStorage.getItem('username');
@@ -69,7 +69,16 @@ const GameScreen = () => {
       className="min-h-screen bg-black relative overflow-hidden"
     >
       {/* HUD Bar */}
-      <HUD />
+      <GameHUD
+        health={health}
+        maxHealth={3}
+        score={score}
+        portalsCleared={portalsCleared}
+        maxPortals={maxPortals}
+        difficulty={difficulty?.name || 'HARD'}
+        timeLeft={globalTimeLeft}
+        maxTime={7200}
+      />
       
       {/* Background gradient effect */}
       <div className="fixed inset-0 pointer-events-none">
@@ -77,11 +86,11 @@ const GameScreen = () => {
       </div>
 
       {/* Main Game Container */}
-      <div className="pt-0 pb-6 px-4 h-[100vh] flex flex-col items-center justify-center relative z-10">
+      <div className="pt-32 pb-6 px-4 h-[100vh] flex flex-col items-center justify-center relative z-10">
         {/* Dimension Status - Above border */}
         <div className="mb-6">
-          <p className="font-vt323 text-red-500 text-sm tracking-widest text-center drop-shadow-lg drop-shadow-red-600/50">
-            // DIMENSION: UPSIDE DOWN // STATUS: UNSTABLE //
+          <p className="font-vt323 text-white text-sm tracking-widest text-center drop-shadow-lg drop-shadow-white/50">
+            DIMENSION: UPSIDE DOWN
           </p>
         </div>
 
@@ -136,15 +145,15 @@ const GameScreen = () => {
           </div>
           
           {/* Status items */}
-          <span className="text-red-500 font-code text-xs uppercase tracking-widest font-bold drop-shadow-lg drop-shadow-red-600/50">AUTO-RUN ENGAGED</span>
+          <span className="text-white font-code text-xs uppercase tracking-widest font-bold drop-shadow-lg drop-shadow-white/50">AUTO-RUN ENGAGED</span>
           
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-red-600 rounded-full shadow-lg shadow-red-600/50"></div>
-            <span className="text-red-600 font-code text-xs uppercase tracking-widest font-bold animate-pulse drop-shadow-lg drop-shadow-red-600/50">PORTAL ANOMALIES DETECTED</span>
-            <div className="w-1.5 h-1.5 bg-red-600 rounded-full shadow-lg shadow-red-600/50"></div>
+            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-lg shadow-white/50"></div>
+            <span className="text-white font-code text-xs uppercase tracking-widest font-bold animate-pulse drop-shadow-lg drop-shadow-white/50">PORTAL ANOMALIES DETECTED</span>
+            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-lg shadow-white/50"></div>
           </div>
           
-          <span className="text-red-500 font-code text-xs uppercase tracking-widest font-bold drop-shadow-lg drop-shadow-red-600/50">SURVIVAL MODE ACTIVE</span>
+          <span className="text-white font-code text-xs uppercase tracking-widest font-bold drop-shadow-lg drop-shadow-white/50">SURVIVAL MODE ACTIVE</span>
         </div>
       </div>
 

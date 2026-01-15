@@ -327,6 +327,7 @@ export default class RunnerScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
       console.log('🚀 JUMP ACTIVATED - Player Y:', this.player.y.toFixed(2));
       this.player.setVelocityY(-450);
+      this.lastJumpTime = time; // Track jump time for collision avoidance
     }
 
     const effectiveSpeed = this.currentSpeed * this.speedMultiplier;
@@ -514,13 +515,27 @@ export default class RunnerScene extends Phaser.Scene {
   handleDemogorgonCollision(player, demogorgon) {
     if (!this.isGameActive) return;
     
-    // Reduce score by 2
+    // Check if player jumped recently (within 200ms) to avoid collision
+    const currentTime = this.time.now;
+    const lastJumpTime = this.lastJumpTime || 0;
+    const jumpWindow = 200; // milliseconds
+    
+    if (currentTime - lastJumpTime < jumpWindow && player.body.velocity.y < 0) {
+      // Player successfully jumped to avoid demogorgon - destroy demogorgon
+      console.log('✨ JUMPED OVER DEMOGORGON! Collision avoided!');
+      demogorgon.destroy();
+      this.currentEntityType = null;
+      this.lastEntityDestroyedTime = this.time.now;
+      return;
+    }
+    
+    // Collision not avoided - reduce score by 2
     console.log('💀 DEMOGORGON HIT! Score reduced by 2');
     demogorgon.destroy();
     this.currentEntityType = null;
     this.lastEntityDestroyedTime = this.time.now;
     
-    // Trigger demogorgon hit callback
+    // Trigger demogorgon hit callback to reduce score in GameContext
     if (this.onDemogorgonHit) {
       this.onDemogorgonHit();
     }

@@ -157,7 +157,7 @@ const InstructionsScreen = () => {
               <p className="font-vt323 text-gray-400">
                 Correct: +100 pts | Fast solve: +50 bonus
                 <br />
-                Wrong: -50 pts | Timeout: -75 pts
+                <span className="text-yellow-400 font-bold">Correct: +100 pts</span>
                 <br />
                 Distance: +1 pt/second survived
               </p>

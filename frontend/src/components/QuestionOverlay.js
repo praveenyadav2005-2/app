@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Terminal, Clock, AlertTriangle } from 'lucide-react';
 import { useGame } from '../context/GameContext';
+import { DIFFICULTY } from '../context/GameContext';
 import { Button } from './ui/button';
 
 const QuestionOverlay = () => {
@@ -16,7 +17,11 @@ const QuestionOverlay = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const questionTimeLimit = currentQuestion?.timeLimit || difficulty.timeLimit;
+  // Get the full difficulty object and its timeLimit
+  const difficultyObj = typeof difficulty === 'string' 
+    ? Object.values(DIFFICULTY).find(d => d.name === difficulty) 
+    : difficulty;
+  const questionTimeLimit = currentQuestion?.timeLimit || difficultyObj?.timeLimit || 1200;
 
   // Reset state when new question appears
   useEffect(() => {
@@ -56,7 +61,12 @@ const QuestionOverlay = () => {
   if (!showQuestionOverlay || !currentQuestion) return null;
 
   const timePercentage = (timeRemaining / questionTimeLimit) * 100;
-  const isLowTime = timeRemaining <= 5;
+  const isLowTime = timeRemaining <= 60; // Low time when <= 1 minute
+  
+  // Convert timeRemaining to minutes format
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+  const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
   return (
     <div 
@@ -91,11 +101,11 @@ const QuestionOverlay = () => {
         <div className="p-10">
           {/* Timer display - centered and bold */}
           <div data-testid="question-timer" className="flex items-center justify-center gap-4 mb-8">
-            <Clock className={`w-8 h-8 ${isLowTime ? 'text-red-500 animate-pulse drop-shadow-lg' : 'text-cyan-400'}`} />
+            <Clock className={`w-8 h-8 ${isLowTime ? 'text-red-500 animate-pulse drop-shadow-lg' : 'text-white'}`} />
             <span className={`font-code text-5xl font-bold tracking-wider ${
-              isLowTime ? 'text-red-500 animate-flicker drop-shadow-lg' : 'text-cyan-300'
+              isLowTime ? 'text-red-500 animate-flicker drop-shadow-lg' : 'text-white'
             }`}>
-              {timeRemaining}s
+              {timeDisplay}
             </span>
           </div>
 
@@ -120,8 +130,8 @@ const QuestionOverlay = () => {
                 <p className="font-code text-lg text-gray-100 leading-relaxed">
                   {currentQuestion.questionText.split('\n')[0]}
                 </p>
-                <pre className="code-block bg-black/80 border border-cyan-900/40 p-4 rounded overflow-x-auto">
-                  <code className="text-cyan-300">{currentQuestion.questionText.split('\n').slice(1).join('\n')}</code>
+                <pre className="code-block bg-black/80 border border-white/40 p-4 rounded overflow-x-auto">
+                  <code className="text-white">{currentQuestion.questionText.split('\n').slice(1).join('\n')}</code>
                 </pre>
               </div>
             ) : (
@@ -134,7 +144,7 @@ const QuestionOverlay = () => {
           {/* Answer form */}
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="relative group">
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-cyan-500 font-code text-2xl group-focus-within:text-red-500">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white font-code text-2xl group-focus-within:text-red-500">
                 {'>'}
               </span>
               <input
@@ -143,7 +153,7 @@ const QuestionOverlay = () => {
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Enter your answer..."
-                className="w-full px-16 py-4 bg-black border-2 border-cyan-600/50 focus:border-cyan-500 text-cyan-300 font-code text-lg placeholder-gray-600 outline-none transition-all rounded focus:shadow-lg focus:shadow-cyan-500/20"
+                className="w-full px-16 py-4 bg-black border-2 border-white/50 focus:border-white text-white font-code text-lg placeholder-gray-600 outline-none transition-all rounded focus:shadow-lg focus:shadow-white/20"
                 autoFocus
                 disabled={isSubmitting}
               />

@@ -6,56 +6,48 @@ export const mockQuestions = {
       questionText: 'What is the output of: 2 + 2 * 3',
       correctAnswer: '8',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e2',
       questionText: 'In Python, what keyword is used to define a function?',
       correctAnswer: 'def',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e3',
       questionText: 'What does HTML stand for? (just first letter of each word)',
       correctAnswer: 'html',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e4',
       questionText: 'What is 15 % 4? (modulo operation)',
       correctAnswer: '3',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e5',
       questionText: 'What symbol is used for single-line comments in JavaScript?',
       correctAnswer: '//',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e6',
       questionText: 'What is the boolean value of an empty string in Python?',
       correctAnswer: 'false',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e7',
       questionText: 'What method adds an element to the end of an array in JavaScript?',
       correctAnswer: 'push',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
     {
       id: 'e8',
       questionText: 'What is 2^8? (2 to the power of 8)',
       correctAnswer: '256',
       difficulty: 'EASY',
-      timeLimit: 10,
     },
   ],
   MEDIUM: [
@@ -64,7 +56,6 @@ export const mockQuestions = {
       questionText: 'What will be printed?\n\nfor i in range(3):\n    print(i, end="")',
       correctAnswer: '012',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
       hasCode: true,
     },
     {
@@ -72,14 +63,12 @@ export const mockQuestions = {
       questionText: 'What is the time complexity of binary search?',
       correctAnswer: 'o(log n)',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
     },
     {
       id: 'm3',
       questionText: 'What will this return?\n\n[1,2,3].map(x => x * 2).join("-")',
       correctAnswer: '2-4-6',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
       hasCode: true,
     },
     {
@@ -87,14 +76,12 @@ export const mockQuestions = {
       questionText: 'In SQL, which clause is used to filter aggregated results?',
       correctAnswer: 'having',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
     },
     {
       id: 'm5',
       questionText: 'What is the output?\n\nprint(len(set([1,1,2,2,3])))',
       correctAnswer: '3',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
       hasCode: true,
     },
     {
@@ -102,14 +89,12 @@ export const mockQuestions = {
       questionText: 'What HTTP status code means "Not Found"?',
       correctAnswer: '404',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
     },
     {
       id: 'm7',
       questionText: 'What is the result?\n\nconsole.log(typeof null)',
       correctAnswer: 'object',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
       hasCode: true,
     },
     {
@@ -117,7 +102,6 @@ export const mockQuestions = {
       questionText: 'What data structure uses LIFO (Last In First Out)?',
       correctAnswer: 'stack',
       difficulty: 'MEDIUM',
-      timeLimit: 20,
     },
   ],
   HARD: [
@@ -126,7 +110,6 @@ export const mockQuestions = {
       questionText: 'What is printed?\n\ndef f(a=[]):\n    a.append(1)\n    return len(a)\n\nprint(f(), f(), f())',
       correctAnswer: '1 2 3',
       difficulty: 'HARD',
-      timeLimit: 30,
       hasCode: true,
     },
     {
@@ -134,14 +117,12 @@ export const mockQuestions = {
       questionText: 'What is the space complexity of merge sort?',
       correctAnswer: 'o(n)',
       difficulty: 'HARD',
-      timeLimit: 30,
     },
     {
       id: 'h3',
       questionText: 'What is output?\n\nconst a = [1,2,3];\nconst b = a;\nb.push(4);\nconsole.log(a.length)',
       correctAnswer: '4',
       difficulty: 'HARD',
-      timeLimit: 30,
       hasCode: true,
     },
     {
@@ -149,14 +130,12 @@ export const mockQuestions = {
       questionText: 'In Big-O, what is the complexity of finding an element in a balanced BST?',
       correctAnswer: 'o(log n)',
       difficulty: 'HARD',
-      timeLimit: 30,
     },
     {
       id: 'h5',
       questionText: 'What is the output?\n\nprint(bool([] == False))',
       correctAnswer: 'false',
       difficulty: 'HARD',
-      timeLimit: 30,
       hasCode: true,
     },
     {
@@ -164,14 +143,12 @@ export const mockQuestions = {
       questionText: 'What pattern does the Observer pattern implement? (one word)',
       correctAnswer: 'publish-subscribe',
       difficulty: 'HARD',
-      timeLimit: 30,
     },
     {
       id: 'h7',
       questionText: 'Result of:\n\nconsole.log(0.1 + 0.2 === 0.3)',
       correctAnswer: 'false',
       difficulty: 'HARD',
-      timeLimit: 30,
       hasCode: true,
     },
     {
@@ -179,7 +156,6 @@ export const mockQuestions = {
       questionText: 'What algorithm is used by JavaScript\'s Array.sort() internally? (one word)',
       correctAnswer: 'timsort',
       difficulty: 'HARD',
-      timeLimit: 30,
     },
   ],
 };
