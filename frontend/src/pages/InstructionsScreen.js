@@ -100,11 +100,9 @@ const InstructionsScreen = () => {
           <p className="font-vt323 text-xl text-gray-300 leading-relaxed text-center">
             You have been pulled into the <span className="text-red-400">UPSIDE DOWN</span>.
             <br />
-            The only way out is through corrupted portals that block your path.
+            Navigate through obstacles and solve coding challenges to survive.
             <br />
-            Each portal contains a <span className="text-red-400">CIPHER</span> that must be decoded.
-            <br />
-            <span className="text-yellow-400">Solve them to survive. Fail, and the Demogorgon strikes.</span>
+            <span className="text-yellow-400">Defeat the Demogorgons. Solve the ciphers. Escape!</span>
           </p>
         </div>
 
@@ -114,22 +112,22 @@ const InstructionsScreen = () => {
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Heart className="w-8 h-8 text-red-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-red-400 mb-2">HEALTH SYSTEM</h3>
+              <h3 className="font-vt323 text-xl text-red-400 mb-2">LIVES</h3>
               <p className="font-vt323 text-gray-400">
-                You start with 3 hearts. Wrong answers or timeouts summon the Demogorgon, costing you 1 heart.
-                Game ends at 0 health.
+                You start with 3 lives. Answering questions incorrectly costs 1 life.
+                Game ends at 0 lives. Use your lives wisely!
               </p>
             </div>
           </div>
 
-          {/* Portals */}
+          {/* Questions/Bonuses */}
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Target className="w-8 h-8 text-red-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-red-400 mb-2">PORTALS</h3>
+              <h3 className="font-vt323 text-xl text-red-400 mb-2">QUESTIONS</h3>
               <p className="font-vt323 text-gray-400">
-                Red glowing portals appear in your path. Colliding with them triggers a coding challenge.
-                Stabilize them with correct answers!
+                Collect bonuses to trigger questions. Solve them correctly to earn points.
+                Total: 5 EASY, 5 MEDIUM, 5 HARD questions available.
               </p>
             </div>
           </div>
@@ -140,11 +138,11 @@ const InstructionsScreen = () => {
             <div>
               <h3 className="font-vt323 text-xl text-yellow-400 mb-2">TIME LIMITS</h3>
               <p className="font-vt323 text-gray-400">
-                <span className="text-green-400">EASY: 10s</span> • 
-                <span className="text-orange-400"> MEDIUM: 20s</span> • 
-                <span className="text-red-400"> HARD: 30s</span>
+                <span className="text-green-400">EASY: 20 min</span> • 
+                <span className="text-orange-400"> MEDIUM: 30 min</span> • 
+                <span className="text-red-400"> HARD: 40 min</span>
                 <br />
-                Global time limit: 90 minutes
+                Total game time: 2 hours
               </p>
             </div>
           </div>
@@ -155,43 +153,37 @@ const InstructionsScreen = () => {
             <div>
               <h3 className="font-vt323 text-xl text-yellow-400 mb-2">SCORING</h3>
               <p className="font-vt323 text-gray-400">
-                Correct: +100 pts | Fast solve: +50 bonus
+                <span className="text-green-400">EASY: +100 pts</span>
                 <br />
-                <span className="text-yellow-400 font-bold">Correct: +100 pts</span>
+                <span className="text-orange-400">MEDIUM: +150 pts</span>
                 <br />
-                Distance: +1 pt/second survived
+                <span className="text-red-400">HARD: +200 pts</span>
               </p>
             </div>
           </div>
 
-          {/* Difficulty */}
+          {/* Obstacles */}
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <AlertTriangle className="w-8 h-8 text-orange-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-orange-400 mb-2">DIFFICULTY SCALING</h3>
+              <h3 className="font-vt323 text-xl text-orange-400 mb-2">DEMOGORGONS (OBSTACLES)</h3>
               <p className="font-vt323 text-gray-400">
-                Portals 0-3: EASY
+                Demogorgons approach from the right side.
                 <br />
-                Portals 4-6: MEDIUM
-                <br />
-                Portals 7+: HARD
+                Hit them and lose 2 points. Avoid using SPACEBAR!
               </p>
             </div>
           </div>
 
-          {/* Power-ups */}
+          {/* Bonuses */}
           <div className="bg-black/80 border border-red-900/50 p-5 flex items-start gap-4">
             <Gift className="w-8 h-8 text-purple-500 flex-shrink-0" />
             <div>
-              <h3 className="font-vt323 text-xl text-purple-400 mb-2">POWER-UPS</h3>
+              <h3 className="font-vt323 text-xl text-purple-400 mb-2">BONUSES</h3>
               <p className="font-vt323 text-gray-400">
-                Random drops on correct answers:
+                Collect bonuses in the game to trigger questions.
                 <br />
-                🔷 Hawkins Stabilizer: Speed ×0.5
-                <br />
-                💚 Lab Med-Kit: +1 Health
-                <br />
-                ⚡ Signal Booster: 2× Score
+                Solve them correctly to earn points and advance.
               </p>
             </div>
           </div>

@@ -22,7 +22,11 @@ export const DIFFICULTY = {
 
 // Scoring rules
 export const SCORING = {
-  CORRECT: 100,
+  CORRECT: {
+    EASY: 100,
+    MEDIUM: 150,
+    HARD: 200,
+  },
   DISTANCE_PER_SECOND: 1,
 };
 
@@ -536,7 +540,9 @@ export const GameProvider = ({ children }) => {
     let newBonuses = bonusesCleared;
     
     if (isCorrect) {
-      scoreDelta = SCORING.CORRECT * scoreMultiplier;
+      const basePts = SCORING.CORRECT[difficulty.name] || 100;
+      scoreDelta = basePts * scoreMultiplier;
+      console.log(`[Scoring] Difficulty: ${difficulty.name}, Base: ${basePts}, Multiplier: ${scoreMultiplier}, Delta: ${scoreDelta}`);
       
       newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
