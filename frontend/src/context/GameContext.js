@@ -1,30 +1,41 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import API_URL from '../config';
 import SecureStorage from '../utils/secureStorage';
+import { markQuestionAsUsed } from '../data/mockData';
+
+// Import all game configuration from centralized config file
+import {
+  PLAYER,
+  SPEED,
+  TIME,
+  DIFFICULTY,
+  DIFFICULTY_PROGRESSION,
+  SCORING,
+  SPAWN,
+  // Legacy exports for backward compatibility
+  INITIAL_HEALTH,
+  MAX_HEALTH,
+  INITIAL_SPEED,
+  SPEED_INCREMENT,
+  SPEED_INCREMENT_INTERVAL,
+  PORTAL_SPAWN_INTERVAL,
+  GLOBAL_TIME_LIMIT,
+} from '../gameConfig';
+
+// Re-export for backward compatibility with other files importing from GameContext
+export {
+  DIFFICULTY,
+  SCORING,
+  INITIAL_HEALTH,
+  MAX_HEALTH,
+  INITIAL_SPEED,
+  SPEED_INCREMENT,
+  SPEED_INCREMENT_INTERVAL,
+  PORTAL_SPAWN_INTERVAL,
+  GLOBAL_TIME_LIMIT,
+};
 
 const GameContext = createContext(null);
-
-// Game constants
-export const INITIAL_HEALTH = 3;
-export const MAX_HEALTH = 3;
-export const INITIAL_SPEED = 200;
-export const SPEED_INCREMENT = 20;
-export const SPEED_INCREMENT_INTERVAL = 30000; // 30 seconds
-export const PORTAL_SPAWN_INTERVAL = 8000; // 8 seconds
-export const GLOBAL_TIME_LIMIT = 2 * 60 * 60; // 2 hours in seconds
-
-// Difficulty settings
-export const DIFFICULTY = {
-  EASY: { name: 'EASY', timeLimit: 1200, scoreBonus: 100 },
-  MEDIUM: { name: 'MEDIUM', timeLimit: 1800, scoreBonus: 100 },
-  HARD: { name: 'HARD', timeLimit: 2400, scoreBonus: 100 },
-};
-
-// Scoring rules
-export const SCORING = {
-  CORRECT: 100,
-  DISTANCE_PER_SECOND: 1,
-};
 
 export const GameProvider = ({ children }) => {
   // Track last known username to detect changes
@@ -91,11 +102,6 @@ export const GameProvider = ({ children }) => {
     const elapsedSeconds = (Date.now() - lastSaved) / 1000;
     const adjustedTime = (savedState.globalTimeLeft ?? GLOBAL_TIME_LIMIT) - elapsedSeconds;
     
-    // Only log once on initial calculation
-    if (!adjustedTimeCalculated.current) {
-      console.log(`⏱️ [GameContext] Time elapsed while away: ${elapsedSeconds.toFixed(1)}s, Remaining: ${adjustedTime.toFixed(1)}s`);
-    }
-    
     cachedAdjustedTime.current = Math.max(0, adjustedTime);
     adjustedTimeCalculated.current = true;
     return cachedAdjustedTime.current;
@@ -145,9 +151,29 @@ export const GameProvider = ({ children }) => {
   });
   const [currentSpeed, setCurrentSpeed] = useState(savedState?.currentSpeed ?? INITIAL_SPEED);
   
-  // Question state
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [showQuestionOverlay, setShowQuestionOverlay] = useState(false);
+  // Question state - restore from saved state if available
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    if (savedState?.currentQuestion && savedState?.showQuestionOverlay) {
+      return savedState.currentQuestion;
+    }
+    return null;
+  });
+  const [showQuestionOverlay, setShowQuestionOverlay] = useState(() => {
+    if (savedState?.currentQuestion && savedState?.showQuestionOverlay) {
+      return true;
+    }
+    return false;
+  });
+  const [questionTimeRemaining, setQuestionTimeRemaining] = useState(() => {
+    // Initialize with adjusted time if there was an active question
+    if (savedState?.currentQuestion && savedState?.showQuestionOverlay && savedState?.questionTimeRemaining != null) {
+      const lastSaved = savedState.lastSavedTimestamp;
+      const elapsedSeconds = lastSaved ? (Date.now() - lastSaved) / 1000 : 0;
+      const adjustedTime = Math.max(0, savedState.questionTimeRemaining - elapsedSeconds);
+      return adjustedTime;
+    }
+    return null;
+  });
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   
@@ -161,7 +187,6 @@ export const GameProvider = ({ children }) => {
 
   // Function to reset all game state - MUST be defined before useEffect that uses it
   const resetGameState = useCallback(() => {
-    console.log('🔄 [GameContext] Resetting all game state');
     setGameStatus('idle');
     setHealth(INITIAL_HEALTH);
     setScore(0);
@@ -179,6 +204,7 @@ export const GameProvider = ({ children }) => {
     setShowResultOverlay(false);
     setCurrentQuestion(null);
     setLastResult(null);
+    setQuestionTimeRemaining(null); // Reset question timer for new user
     // Clear saved game state for current user
     if (currentUsername) {
       const key = getGameStateKey(currentUsername);
@@ -202,11 +228,15 @@ export const GameProvider = ({ children }) => {
         currentSpeed,
         speedMultiplier,
         scoreMultiplier,
+        // Save question state for resume after refresh
+        currentQuestion,
+        showQuestionOverlay,
+        questionTimeRemaining,
         lastSavedTimestamp: Date.now(), // Track when state was last saved
       };
       saveGameState(stateToSave);
     }
-  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, saveGameState]);
+  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, currentQuestion, showQuestionOverlay, questionTimeRemaining, saveGameState]);
 
   // Save state with fresh timestamp when user leaves the page
   useEffect(() => {
@@ -225,13 +255,16 @@ export const GameProvider = ({ children }) => {
           currentSpeed,
           speedMultiplier,
           scoreMultiplier,
+          // Save question state for resume after refresh
+          currentQuestion,
+          showQuestionOverlay,
+          questionTimeRemaining,
           lastSavedTimestamp: Date.now(),
         };
         // Use SecureStorage for encrypted data
         if (currentUsername) {
           const key = getGameStateKey(currentUsername);
           SecureStorage.setItem(key, stateToSave, currentUsername);
-          console.log('💾 [GameContext] Saved encrypted state on page leave');
         }
       }
     };
@@ -255,7 +288,7 @@ export const GameProvider = ({ children }) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, currentUsername, getGameStateKey]);
+  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, currentQuestion, showQuestionOverlay, questionTimeRemaining, currentUsername, getGameStateKey]);
 
   // Check for username changes on every render
   React.useEffect(() => {
@@ -263,12 +296,10 @@ export const GameProvider = ({ children }) => {
     const lastUsername = lastUsernameRef.current;
 
     if (currentUsername !== lastUsername) {
-      console.log(`🔄 [GameContext] Username changed: "${lastUsername}" → "${currentUsername}"`);
       lastUsernameRef.current = currentUsername;
 
       if (currentUsername) {
         // New user logged in
-        console.log('✅ [GameContext] Syncing to new user:', currentUsername);
         setUsername(currentUsername);
         setUserId(localStorage.getItem('userId') || '');
         setToken(localStorage.getItem('token') || '');
@@ -279,7 +310,6 @@ export const GameProvider = ({ children }) => {
         resetGameState();
       } else {
         // User logged out
-        console.log('🚪 [GameContext] User logged out');
         setUsername('');
         setUserId('');
         setToken('');
@@ -293,7 +323,6 @@ export const GameProvider = ({ children }) => {
   // Listen for explicit reset events
   React.useEffect(() => {
     const handleResetEvent = () => {
-      console.log('🎯 [GameContext] Reset event received');
       resetGameState();
     };
 
@@ -306,7 +335,6 @@ export const GameProvider = ({ children }) => {
   useEffect(() => {
     if (gameExpiredWhileAway && !gameExpiredRef.current) {
       gameExpiredRef.current = true;
-      console.log('⏰ [GameContext] Game expired while away - triggering game over');
       // The game already started with 'ended' status, clear saved state
       if (currentUsername) {
         const key = getGameStateKey(currentUsername);
@@ -333,18 +361,15 @@ export const GameProvider = ({ children }) => {
       if (lastSaved) {
         const elapsedSeconds = (Date.now() - lastSaved) / 1000;
         adjustedTimeLeft = Math.max(0, (existingSavedState.globalTimeLeft ?? GLOBAL_TIME_LIMIT) - elapsedSeconds);
-        console.log(`⏱️ [GameContext] Time elapsed while away: ${elapsedSeconds.toFixed(1)}s, Adjusted time: ${adjustedTimeLeft.toFixed(1)}s`);
       }
       
       // If time ran out while away, end the game
       if (adjustedTimeLeft <= 0) {
-        console.log('⏰ [GameContext] Game expired while away - ending game');
         setGameStatus('ended');
         setGlobalTimeLeft(0);
         return;
       }
       
-      console.log('🔄 [GameContext] Resuming existing game session');
       // Restore all state from saved data with adjusted time
       setHealth(existingSavedState.health ?? INITIAL_HEALTH);
       setScore(existingSavedState.score ?? 0);
@@ -357,12 +382,26 @@ export const GameProvider = ({ children }) => {
       setCurrentSpeed(existingSavedState.currentSpeed ?? INITIAL_SPEED);
       setSpeedMultiplier(existingSavedState.speedMultiplier ?? 1);
       setScoreMultiplier(existingSavedState.scoreMultiplier ?? 1);
-      setGameStatus('playing');
+      
+      // Restore question state if there was an active question
+      // Note: Question state may already be initialized from savedState during component mount
+      if (existingSavedState.currentQuestion && existingSavedState.showQuestionOverlay) {
+        // Only set if not already set from initialization
+        if (!currentQuestion) {
+          setCurrentQuestion(existingSavedState.currentQuestion);
+        }
+        if (!showQuestionOverlay) {
+          setShowQuestionOverlay(true);
+        }
+        // questionTimeRemaining is already initialized with adjusted time from useState
+        setGameStatus('paused'); // Keep game paused while question is active
+      } else {
+        setGameStatus('playing');
+      }
       return;
     }
     
     // Starting a fresh game
-    console.log('🎮 [GameContext] Starting new game');
     setHealth(INITIAL_HEALTH);
     setScore(0);
     setPortalsCleared(0);
@@ -394,9 +433,7 @@ export const GameProvider = ({ children }) => {
           }
         });
         const data = await response.json();
-        if (data.success) {
-          console.log('✅ [GameContext] Game session started on backend:', data.game);
-        } else {
+        if (!data.success) {
           console.error('❌ [GameContext] Failed to start game on backend:', data.message);
         }
       }
@@ -433,9 +470,7 @@ export const GameProvider = ({ children }) => {
       });
       
       const data = await response.json();
-      if (data.success) {
-        console.log(`✅ [GameContext] Game state updated on backend (${action})`);
-      } else {
+      if (!data.success) {
         console.error('❌ [GameContext] Failed to update game state:', data.message);
       }
     } catch (error) {
@@ -447,7 +482,13 @@ export const GameProvider = ({ children }) => {
   const pauseGame = useCallback(() => {
     setGameStatus('paused');
     if (phaserGameRef.current?.scene?.scenes[0]) {
-      phaserGameRef.current.scene.scenes[0].physics?.pause();
+      // Use the scene's pauseGame method which properly sets isGameActive = false
+      const runnerScene = phaserGameRef.current.scene.scenes[0];
+      if (runnerScene.pauseGame) {
+        runnerScene.pauseGame();
+      } else {
+        runnerScene.physics?.pause();
+      }
     }
   }, []);
 
@@ -455,7 +496,13 @@ export const GameProvider = ({ children }) => {
   const resumeGame = useCallback(() => {
     setGameStatus('playing');
     if (phaserGameRef.current?.scene?.scenes[0]) {
-      phaserGameRef.current.scene.scenes[0].physics?.resume();
+      // Use the scene's resumeGame method which properly sets isGameActive = true
+      const runnerScene = phaserGameRef.current.scene.scenes[0];
+      if (runnerScene.resumeGame) {
+        runnerScene.resumeGame();
+      } else {
+        runnerScene.physics?.resume();
+      }
     }
   }, []);
 
@@ -463,7 +510,13 @@ export const GameProvider = ({ children }) => {
   const endGame = useCallback(() => {
     setGameStatus('ended');
     if (phaserGameRef.current?.scene?.scenes[0]) {
-      phaserGameRef.current.scene.scenes[0].physics?.pause();
+      // Use the scene's stopGame method which properly sets isGameActive = false
+      const runnerScene = phaserGameRef.current.scene.scenes[0];
+      if (runnerScene.stopGame) {
+        runnerScene.stopGame();
+      } else {
+        runnerScene.physics?.pause();
+      }
     }
     
     // Update backend with game over status
@@ -483,9 +536,9 @@ export const GameProvider = ({ children }) => {
 
   // Update difficulty based on portals cleared
   const updateDifficulty = useCallback((portals) => {
-    if (portals >= 7) {
+    if (portals >= DIFFICULTY_PROGRESSION.PORTALS_FOR_HARD) {
       setDifficulty(DIFFICULTY.HARD);
-    } else if (portals >= 4) {
+    } else if (portals >= DIFFICULTY_PROGRESSION.PORTALS_FOR_MEDIUM) {
       setDifficulty(DIFFICULTY.MEDIUM);
     } else {
       setDifficulty(DIFFICULTY.EASY);
@@ -499,14 +552,13 @@ export const GameProvider = ({ children }) => {
     setShowQuestionOverlay(true);
   }, [pauseGame]);
 
-  // Handle demogorgon collision - reduce score by 2
+  // Handle demogorgon collision - reduce score based on config
   const handleDemogorgonHit = useCallback(() => {
-    const newScore = Math.max(0, score - 2);
+    const newScore = Math.max(0, score - SCORING.DEMOGORGON_PENALTY);
     const newObstaclesHit = obstaclesHit + 1;
     
     setScore(newScore);
     setObstaclesHit(newObstaclesHit);
-    console.log('[GameContext] Demogorgon hit - score reduced by 2');
     
     // Update backend
     updateGameStateOnBackend('demogorgon_hit', {
@@ -522,7 +574,7 @@ export const GameProvider = ({ children }) => {
     });
   }, [score, obstaclesHit, health, portalsCleared, bonusesCleared, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend]);
 
-  // Submit answer
+  // Submit answer - allows retries on wrong answers (no health deduction until timeout or save me)
   const submitAnswer = useCallback((answer, timeRemaining, questionTimeLimit) => {
     const trimmedAnswer = answer.trim().toLowerCase();
     const correctAnswer = currentQuestion?.correctAnswer?.toLowerCase();
@@ -536,7 +588,7 @@ export const GameProvider = ({ children }) => {
     let newBonuses = bonusesCleared;
     
     if (isCorrect) {
-      scoreDelta = SCORING.CORRECT * scoreMultiplier;
+      scoreDelta = SCORING.CORRECT_ANSWER * scoreMultiplier;
       
       newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
@@ -550,22 +602,68 @@ export const GameProvider = ({ children }) => {
         newBonuses = bonusesCleared + 1;
         setBonusesCleared(newBonuses);
       }
+      
+      const newScore = Math.max(0, score + scoreDelta);
+      setScore(newScore);
+      
+      // Update backend with new game state
+      updateGameStateOnBackend('answer_correct', {
+        health: newHealth,
+        score: newScore,
+        portalsCleared: newPortals,
+        bonusesCleared: newBonuses,
+        obstaclesHit,
+        difficulty: difficulty.name,
+        currentSpeed,
+        globalTimeLeft,
+        timeSurvived
+      });
+      
+      const result = {
+        correct: true,
+        newHealth,
+        scoreDelta,
+        powerUp,
+        continueGame: newHealth > 0,
+      };
+      
+      // Mark question as used only after correct answer
+      markQuestionAsUsed(currentQuestion?.id);
+      
+      setLastResult(result);
+      setShowQuestionOverlay(false);
+      setQuestionTimeRemaining(null); // Clear saved question timer
+      setShowResultOverlay(true);
+      
+      return result;
     } else {
-      newHealth = Math.max(0, health - 1);
-      setHealth(newHealth);
+      // Wrong answer - allow retry (don't deduct health, don't close overlay)
+      return {
+        correct: false,
+        newHealth: health,
+        scoreDelta: 0,
+        powerUp: null,
+        continueGame: true,
+        allowRetry: true, // Flag to indicate user can retry
+      };
     }
+  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, scoreMultiplier, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateDifficulty, updateGameStateOnBackend]);
+
+  // Use Save Me - skips the question but uses a life
+  const useSaveMe = useCallback(() => {
+    const newHealth = Math.max(0, health - 1);
+    setHealth(newHealth);
     
-    const newScore = Math.max(0, score + scoreDelta);
-    setScore(newScore);
-    console.log(`[GameContext.submitAnswer] Score update: ${score} + ${scoreDelta} = ${newScore}`);
+    // Determine if game should end
+    const shouldEndGame = newHealth <= 0;
     
-    // Update backend with new game state
-    const action = isCorrect ? 'answer_correct' : 'answer_incorrect';
+    // Update backend with appropriate action
+    const action = shouldEndGame ? 'game_over' : 'save_me_used';
     updateGameStateOnBackend(action, {
       health: newHealth,
-      score: newScore,
-      portalsCleared: newPortals,
-      bonusesCleared: newBonuses,
+      score,
+      portalsCleared,
+      bonusesCleared,
       obstaclesHit,
       difficulty: difficulty.name,
       currentSpeed,
@@ -574,27 +672,49 @@ export const GameProvider = ({ children }) => {
     });
     
     const result = {
-      correct: isCorrect,
+      correct: false,
       newHealth,
-      scoreDelta,
-      powerUp,
+      scoreDelta: 0,
+      powerUp: null,
       continueGame: newHealth > 0,
+      savedWithLife: true,
     };
+    
+    // Mark question as used when skipped with Save Me
+    markQuestionAsUsed(currentQuestion?.id);
     
     setLastResult(result);
     setShowQuestionOverlay(false);
+    setQuestionTimeRemaining(null); // Clear saved question timer
     setShowResultOverlay(true);
     
+    // If health is 0, immediately set game status to ended
+    if (shouldEndGame) {
+      setGameStatus('ended');
+      if (phaserGameRef.current?.scene?.scenes[0]) {
+        const runnerScene = phaserGameRef.current.scene.scenes[0];
+        if (runnerScene.stopGame) {
+          runnerScene.stopGame();
+        } else {
+          runnerScene.physics?.pause();
+        }
+      }
+    }
+    
     return result;
-  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, scoreMultiplier, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateDifficulty, updateGameStateOnBackend]);
+  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend, currentQuestion]);
 
   // Handle timeout
   const handleTimeout = useCallback(() => {
     const newHealth = Math.max(0, health - 1);
     setHealth(newHealth);
     
-    // Update backend for timeout (treated as incorrect answer with health loss)
-    updateGameStateOnBackend('answer_incorrect', {
+    // Determine if game should end
+    const shouldEndGame = newHealth <= 0;
+    
+    // Update backend for timeout with appropriate action
+    const action = shouldEndGame ? 'game_over' : 'answer_incorrect';
+    updateGameStateOnBackend(action, {
       health: newHealth,
       score,
       portalsCleared,
@@ -615,12 +735,29 @@ export const GameProvider = ({ children }) => {
       timeout: true,
     };
     
+    // Mark question as used when time runs out
+    markQuestionAsUsed(currentQuestion?.id);
+    
     setLastResult(result);
     setShowQuestionOverlay(false);
+    setQuestionTimeRemaining(null); // Clear saved question timer
     setShowResultOverlay(true);
     
+    // If health is 0, immediately set game status to ended
+    if (shouldEndGame) {
+      setGameStatus('ended');
+      if (phaserGameRef.current?.scene?.scenes[0]) {
+        const runnerScene = phaserGameRef.current.scene.scenes[0];
+        if (runnerScene.stopGame) {
+          runnerScene.stopGame();
+        } else {
+          runnerScene.physics?.pause();
+        }
+      }
+    }
+    
     return result;
-  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend]);
+  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend, currentQuestion]);
 
   // Close result overlay
   const closeResultOverlay = useCallback(() => {
@@ -725,6 +862,8 @@ export const GameProvider = ({ children }) => {
     // Question state
     currentQuestion,
     showQuestionOverlay,
+    questionTimeRemaining,
+    setQuestionTimeRemaining,
     showResultOverlay,
     lastResult,
     
@@ -745,6 +884,7 @@ export const GameProvider = ({ children }) => {
     handlePortalHit,
     handleDemogorgonHit,
     submitAnswer,
+    useSaveMe,
     handleTimeout,
     closeResultOverlay,
     applyPowerUp,

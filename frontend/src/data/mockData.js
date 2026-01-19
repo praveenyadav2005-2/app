@@ -3,51 +3,59 @@ export const mockQuestions = {
   EASY: [
     {
       id: 'e1',
-      questionText: 'What is the output of: 2 + 2 * 3',
-      correctAnswer: '8',
+      questionText: 'You are sprinting through the Upside Down, but a bio-organic gate blocks your path. The gate is calculating the "Neural Potential" of your surroundings using the sensor code below. Refer to the document linked to find the correct formula to bypass the gate.',
+      correctAnswer: 'IE{0}',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/18o4khjbWLI67a3Ns0Pj3GR5xLiNOZeuy/edit',
     },
     {
       id: 'e2',
-      questionText: 'In Python, what keyword is used to define a function?',
-      correctAnswer: 'def',
+      questionText: 'The lights blink in pairs. Each pair is a single letter, translated from the old code used in the arcade.',
+      correctAnswer: 'IE{HAWKINS}',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/1ZeyzQQV4iAXYPoxVhePWEW7lHZAYiQjpmWJjHfnPe5A/edit?tab=t.0',
     },
     {
       id: 'e3',
       questionText: 'What does HTML stand for? (just first letter of each word)',
       correctAnswer: 'html',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e3-html-basics',
     },
     {
       id: 'e4',
       questionText: 'What is 15 % 4? (modulo operation)',
       correctAnswer: '3',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e4-modulo-operation',
     },
     {
       id: 'e5',
       questionText: 'What symbol is used for single-line comments in JavaScript?',
       correctAnswer: '//',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e5-javascript-comments',
     },
     {
       id: 'e6',
       questionText: 'What is the boolean value of an empty string in Python?',
       correctAnswer: 'false',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e6-python-booleans',
     },
     {
       id: 'e7',
       questionText: 'What method adds an element to the end of an array in JavaScript?',
       correctAnswer: 'push',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e7-array-methods',
     },
     {
       id: 'e8',
       questionText: 'What is 2^8? (2 to the power of 8)',
       correctAnswer: '256',
       difficulty: 'EASY',
+      link: 'https://docs.google.com/document/d/e8-exponents',
     },
   ],
   MEDIUM: [
@@ -57,12 +65,14 @@ export const mockQuestions = {
       correctAnswer: '012',
       difficulty: 'MEDIUM',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/m1-python-loops',
     },
     {
       id: 'm2',
       questionText: 'What is the time complexity of binary search?',
       correctAnswer: 'o(log n)',
       difficulty: 'MEDIUM',
+      link: 'https://docs.google.com/document/d/m2-binary-search',
     },
     {
       id: 'm3',
@@ -70,12 +80,14 @@ export const mockQuestions = {
       correctAnswer: '2-4-6',
       difficulty: 'MEDIUM',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/m3-array-methods',
     },
     {
       id: 'm4',
       questionText: 'In SQL, which clause is used to filter aggregated results?',
       correctAnswer: 'having',
       difficulty: 'MEDIUM',
+      link: 'https://docs.google.com/document/d/m4-sql-aggregation',
     },
     {
       id: 'm5',
@@ -83,12 +95,14 @@ export const mockQuestions = {
       correctAnswer: '3',
       difficulty: 'MEDIUM',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/m5-python-sets',
     },
     {
       id: 'm6',
       questionText: 'What HTTP status code means "Not Found"?',
       correctAnswer: '404',
       difficulty: 'MEDIUM',
+      link: 'https://docs.google.com/document/d/m6-http-status-codes',
     },
     {
       id: 'm7',
@@ -96,12 +110,14 @@ export const mockQuestions = {
       correctAnswer: 'object',
       difficulty: 'MEDIUM',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/m7-javascript-types',
     },
     {
       id: 'm8',
       questionText: 'What data structure uses LIFO (Last In First Out)?',
       correctAnswer: 'stack',
       difficulty: 'MEDIUM',
+      link: 'https://docs.google.com/document/d/m8-data-structures',
     },
   ],
   HARD: [
@@ -111,12 +127,14 @@ export const mockQuestions = {
       correctAnswer: '1 2 3',
       difficulty: 'HARD',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/h1-mutable-defaults',
     },
     {
       id: 'h2',
       questionText: 'What is the space complexity of merge sort?',
       correctAnswer: 'o(n)',
       difficulty: 'HARD',
+      link: 'https://docs.google.com/document/d/h2-merge-sort',
     },
     {
       id: 'h3',
@@ -124,12 +142,14 @@ export const mockQuestions = {
       correctAnswer: '4',
       difficulty: 'HARD',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/h3-reference-vs-value',
     },
     {
       id: 'h4',
       questionText: 'In Big-O, what is the complexity of finding an element in a balanced BST?',
       correctAnswer: 'o(log n)',
       difficulty: 'HARD',
+      link: 'https://docs.google.com/document/d/h4-bst-complexity',
     },
     {
       id: 'h5',
@@ -137,12 +157,14 @@ export const mockQuestions = {
       correctAnswer: 'false',
       difficulty: 'HARD',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/h5-python-equality',
     },
     {
       id: 'h6',
       questionText: 'What pattern does the Observer pattern implement? (one word)',
       correctAnswer: 'publish-subscribe',
       difficulty: 'HARD',
+      link: 'https://docs.google.com/document/d/h6-design-patterns',
     },
     {
       id: 'h7',
@@ -150,12 +172,14 @@ export const mockQuestions = {
       correctAnswer: 'false',
       difficulty: 'HARD',
       hasCode: true,
+      link: 'https://docs.google.com/document/d/h7-floating-point',
     },
     {
       id: 'h8',
       questionText: 'What algorithm is used by JavaScript\'s Array.sort() internally? (one word)',
       correctAnswer: 'timsort',
       difficulty: 'HARD',
+      link: 'https://docs.google.com/document/d/h8-sorting-algorithms',
     },
   ],
 };
@@ -180,7 +204,6 @@ export const loadAnsweredQuestions = () => {
   const answeredIds = SecureStorage.getItem(key, username);
   if (answeredIds && Array.isArray(answeredIds)) {
     usedQuestions = new Set(answeredIds);
-    console.log(`📚 [Questions] Loaded ${usedQuestions.size} answered questions for ${username}`);
   } else {
     usedQuestions = new Set();
   }
@@ -209,10 +232,10 @@ export const forceResetAllQuestions = () => {
     SecureStorage.removeItem(key);
   }
   usedQuestions = new Set();
-  console.log('🔄 [Questions] All questions reset');
 };
 
 // Get a random unused question based on difficulty
+// NOTE: Question is NOT marked as used here - call markQuestionAsUsed() after completion
 export const getRandomQuestion = (difficulty) => {
   const questions = mockQuestions[difficulty] || mockQuestions.EASY;
   const availableQuestions = questions.filter(q => !usedQuestions.has(q.id));
@@ -220,14 +243,19 @@ export const getRandomQuestion = (difficulty) => {
   if (availableQuestions.length === 0) {
     // All questions in this difficulty have been answered
     // Move to a random question from this difficulty (allow repeat)
-    console.log(`⚠️ [Questions] All ${difficulty} questions answered, allowing repeats`);
     return questions[Math.floor(Math.random() * questions.length)];
   }
   
   const question = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
-  usedQuestions.add(question.id);
-  saveAnsweredQuestions(); // Persist to localStorage
+  // Don't mark as used here - wait until question is actually completed
   return question;
+};
+
+// Mark a question as used (call after question is completed - correct answer, timeout, or save me)
+export const markQuestionAsUsed = (questionId) => {
+  if (!questionId) return;
+  usedQuestions.add(questionId);
+  saveAnsweredQuestions(); // Persist to localStorage
 };
 
 // Mock Leaderboard Data

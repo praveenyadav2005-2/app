@@ -73,7 +73,6 @@ const HealthBar = ({ health, maxHealth = 3 }) => {
  *  - maxHealth: maximum health (default 3)
  *  - score: current score
  *  - portalsCleared: number of portals cleared
- *  - maxPortals: total portals
  *  - difficulty: current difficulty text (e.g., "EASY", "NORMAL", "HARD")
  *  - timeLeft: remaining time in seconds
  *  - maxTime: maximum time (default 300)
@@ -83,7 +82,6 @@ const GameHUD = ({
   maxHealth = 3,
   score = 0,
   portalsCleared = 0,
-  maxPortals = 5,
   difficulty = 'HARD',
   timeLeft = 300,
   maxTime = 300,
@@ -111,7 +109,7 @@ const GameHUD = ({
       <div className="hud-box hud-portals">
         <div className="hud-box-label">Portals</div>
         <div className="hud-box-content portals-value">
-          {portalsCleared} / {maxPortals}
+          {portalsCleared}
         </div>
       </div>
 

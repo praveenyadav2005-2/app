@@ -48,17 +48,12 @@ const WelcomeScreen = () => {
         return;
       }
 
-      console.log('🔐 Login response received for:', data.user.username);
-      console.log('📦 Clearing old session data...');
-      
       localStorage.removeItem('gameStatus');
       localStorage.removeItem('health');
       localStorage.removeItem('score');
       localStorage.removeItem('portalsCleared');
       localStorage.removeItem('timeSurvived');
       sessionStorage.clear();
-
-      console.log('✅ Old session cleared. Storing new user:', data.user.username);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.user.id);
@@ -68,13 +63,6 @@ const WelcomeScreen = () => {
       sessionStorage.setItem('playerId', data.user.username);
       sessionStorage.setItem('playerPassword', password);
 
-      console.log('💾 New user data stored:', {
-        username: localStorage.getItem('username'),
-        userId: localStorage.getItem('userId'),
-        token: localStorage.getItem('token') ? 'SET' : 'NOT SET'
-      });
-
-      console.log('✅ Login successful for:', data.user.username);
       navigate('/instructions');
     } catch (err) {
       setError('Network error: Could not connect to server');
@@ -139,7 +127,6 @@ const WelcomeScreen = () => {
       sessionStorage.setItem('playerId', data.user.username);
       sessionStorage.setItem('playerPassword', registerPassword);
 
-      console.log('✅ Registration successful for:', data.user.username);
       navigate('/instructions');
     } catch (err) {
       setError('Network error: Could not connect to server');

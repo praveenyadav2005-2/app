@@ -47,14 +47,16 @@ const ResultOverlay = () => {
         <h2 className={`font-horror text-4xl mb-4 tracking-wider ${
           isCorrect ? 'text-green-400 text-glow-green' : 'text-red-500 text-glow-red'
         }`}>
-          {isCorrect ? 'PORTAL STABILIZED' : isTimeout ? 'TIME EXPIRED' : 'WRONG CIPHER'}
+          {isCorrect ? 'PORTAL STABILIZED' : isTimeout ? 'TIME EXPIRED' : lastResult.savedWithLife ? 'LIFE USED' : 'PORTAL UNSTABLE'}
         </h2>
 
         {/* Story text */}
         <p data-testid="result-message" className="font-vt323 text-xl text-gray-300 mb-6 max-w-md mx-auto">
           {isCorrect 
             ? 'Reality restored. The pathway clears momentarily...'
-            : 'The Demogorgon senses your weakness. It attacks!'
+            : lastResult.savedWithLife
+              ? 'You escaped through the portal, but at a cost...'
+              : 'The Demogorgon senses your weakness. It attacks!'
           }
         </p>
 

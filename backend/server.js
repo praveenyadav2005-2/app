@@ -10,8 +10,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
-app.use(helmet()); // Adds security headers (XSS protection, content-type sniffing, etc.)
+// Security middleware with CSP configuration
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Required for inline styles
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || "https://yourdomain.com"],
+      fontSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  } : false, // Disable CSP in development for easier debugging
+  crossOriginEmbedderPolicy: false, // Required for external resources
+}));
 
 // CORS configuration - restrict in production
 const corsOptions = {

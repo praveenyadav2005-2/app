@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, Zap, Clock, Target } from 'lucide-react';
-import { useGame, MAX_HEALTH } from '../context/GameContext';
+import { useGame } from '../context/GameContext';
+import { MAX_HEALTH } from '../gameConfig';
 import { formatLongTime } from '../data/mockData';
 
 const HUD = () => {

@@ -93,35 +93,28 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createBottomFrame() {
-    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-    const width = 1024;
+    // Use dynamic width based on game scale
+    const width = Math.max(800, this.scale.width);
     const height = 50;
+    
+    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
 
-    // Background
-    graphics.fillStyle(0x000000, 0.95);
+    // Background - solid dark
+    graphics.fillStyle(0x0a0505, 1);
     graphics.fillRect(0, 0, width, height);
 
-    // Top border - darker red
-    graphics.lineStyle(2, 0x660000, 0.8);
+    // Top border - single red line
+    graphics.lineStyle(2, 0x660000, 1);
     graphics.lineBetween(0, 0, width, 0);
 
-    // Bottom border - neon red
-    graphics.lineStyle(3, 0xff0000, 1);
-    graphics.lineBetween(0, height, width, height);
-
-    // Left accent
-    graphics.lineStyle(2, 0xff0000, 0.6);
-    graphics.lineBetween(0, 5, 40, 25);
-    graphics.lineBetween(40, 25, 60, height - 5);
-
-    // Right accent
-    graphics.lineBetween(width - 60, height - 5, width - 40, 25);
-    graphics.lineBetween(width - 40, 25, width, 5);
-
-    // Corner glow circles
-    graphics.fillStyle(0xff0000, 0.3);
-    graphics.fillCircle(0, height, 15);
-    graphics.fillCircle(width, height, 15);
+    // Corner brackets - left
+    graphics.lineStyle(2, 0xff0000, 0.8);
+    graphics.lineBetween(0, 0, 0, 15);
+    graphics.lineBetween(0, 0, 15, 0);
+    
+    // Corner brackets - right
+    graphics.lineBetween(width, 0, width, 15);
+    graphics.lineBetween(width, 0, width - 15, 0);
 
     graphics.generateTexture('ui_frame_bottom', width, height);
     graphics.destroy();
@@ -226,7 +219,6 @@ export default class UIScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
-    console.log('[UIScene] Creating with dimensions:', { width, height });
 
     // Top frame - with proper scaling
     const topFrameWidth = Math.max(800, width);
@@ -235,7 +227,6 @@ export default class UIScene extends Phaser.Scene {
     topFrame.setScrollFactor(0);
     topFrame.setDepth(1000);
     topFrame.setDisplaySize(width, 60);
-    console.log('[UIScene] Top frame created:', topFrame);
 
     // Top HUD elements
     const topY = 15;
@@ -437,11 +428,10 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createBottomStatusBars(width, height) {
-    const bottomY = height - 18;
-    const spacing = width / 3;
+    const bottomY = height - 25; // Center vertically in the 50px bottom frame
 
     // Left: AUTO-RUN ENGAGED
-    const autoRunText = this.add.text(spacing / 2, bottomY, '◇ AUTO-RUN ENGAGED', {
+    const autoRunText = this.add.text(width * 0.17, bottomY, 'AUTO-RUN ENGAGED', {
       fontFamily: 'monospace',
       fontSize: '11px',
       fill: '#ff0000',
@@ -453,7 +443,7 @@ export default class UIScene extends Phaser.Scene {
     autoRunText.setDepth(1001);
 
     // Center: PORTAL ANOMALIES DETECTED
-    const anomalyText = this.add.text(width / 2, bottomY, '▲ PORTAL ANOMALIES DETECTED', {
+    const anomalyText = this.add.text(width / 2, bottomY, '● PORTAL ANOMALIES DETECTED ●', {
       fontFamily: 'monospace',
       fontSize: '11px',
       fill: '#ff0000',
@@ -465,7 +455,7 @@ export default class UIScene extends Phaser.Scene {
     anomalyText.setDepth(1001);
 
     // Right: SURVIVAL MODE ACTIVE
-    const survivalText = this.add.text(spacing * 1.5, bottomY, '■ SURVIVAL MODE ACTIVE', {
+    const survivalText = this.add.text(width * 0.83, bottomY, 'SURVIVAL MODE ACTIVE', {
       fontFamily: 'monospace',
       fontSize: '11px',
       fill: '#ff0000',

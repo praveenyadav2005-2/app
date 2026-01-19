@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import playerSprite from '../assets/sprites/characters/player.png';
 import demogorgonSprite from '../assets/sprites/characters/demogorgon.png';
+import { SPEED, SPAWN, PLAYER, UI } from '../gameConfig';
 
 export default class RunnerScene extends Phaser.Scene {
   constructor() {
@@ -10,13 +11,13 @@ export default class RunnerScene extends Phaser.Scene {
     this.portals = null;
     this.demogorgons = null;
     this.background = null;
-    this.currentSpeed = 200;
+    this.currentSpeed = SPEED.INITIAL;
     this.speedMultiplier = 1;
     this.lastPortalTime = 0;
-    this.portalSpawnInterval = 8000;
+    this.portalSpawnInterval = SPAWN.PORTAL_INTERVAL;
     this.gameStartTime = 0;
     this.lastSpeedIncreaseTime = 0;
-    this.speedIncreaseInterval = 30000;
+    this.speedIncreaseInterval = SPEED.INCREMENT_INTERVAL;
     this.isGameActive = false;
     this.onPortalHit = null;
     this.onGameTick = null;
@@ -28,7 +29,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.playerShadow = null;
     this.lastHitFlash = 0;
     this.lastEntityDestroyedTime = 0;
-    this.entitySpawnDelay = 1500; // Delay before spawning next entity
+    this.entitySpawnDelay = SPAWN.ENTITY_SPAWN_DELAY;
     this.currentEntityType = null; // Track if 'portal' or 'demogorgon' is active
     this.lastSpawnedType = 'demogorgon'; // Start with portal (alternate from demogorgon)
   }
@@ -37,7 +38,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.onPortalHit = data.onPortalHit || (() => {});
     this.onGameTick = data.onGameTick || (() => {});
     this.onDemogorgonHit = data.onDemogorgonHit || (() => {});
-    this.currentSpeed = data.initialSpeed || 200;
+    this.currentSpeed = data.initialSpeed || SPEED.INITIAL;
     this.speedMultiplier = 1;
   }
 
@@ -189,35 +190,59 @@ export default class RunnerScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     
+    // Calculate proper ground level accounting for bottom UI
+    const bottomUIHeight = UI.BOTTOM_FRAME_HEIGHT;
+    const groundHeight = UI.GROUND_HEIGHT;
+    const groundY = height - bottomUIHeight - groundHeight / 2; // Road surface Y position
+    const groundTopY = groundY - groundHeight / 2; // Top of the road where player stands
+    
     // Background - dark gradient
     this.background = this.add.rectangle(width / 2, height / 2, width, height, 0x050505);
     
     // Add atmospheric particles
     this.createAtmosphericParticles();
     
-    // Create tiled ground
+    // Create ground fill - solid color below the road (between road and bottom UI)
+    const groundFill = this.add.rectangle(width / 2, height - bottomUIHeight / 2, width + 200, bottomUIHeight, 0x1a0505);
+    groundFill.setDepth(0);
+    
+    // Create tiled ground (road surface)
     this.groundTiles = [];
-    const groundY = height - 50;
     for (let x = 0; x < width + 128; x += 64) {
       const tile = this.add.tileSprite(x, groundY, 64, 32, 'ground');
+      tile.setDepth(1);
       this.groundTiles.push(tile);
     }
     
-    // Physics ground - aligned with visual ground tiles
+    // Physics ground - aligned with top of visual ground tiles
     this.ground = this.physics.add.staticGroup();
-    const groundCollider = this.ground.create(width / 2, height - 45, null);
-    groundCollider.body.setSize(width * 2, 50);
+    const groundCollider = this.ground.create(width / 2, groundTopY + 10, null);
+    groundCollider.body.setSize(width * 2, 20);
     groundCollider.setVisible(false);
     
-    // Player shadow - use rectangle instead
-    this.playerShadow = this.add.rectangle(150, height - 50, 40, 4, 0x000000, 0.5);
+    // Store ground level for entity spawning
+    this.groundLevel = groundTopY;
     
-    // Player
-    this.player = this.physics.add.sprite(150, height - 100, 'player');
+    // Player shadow - position at ground level
+    this.playerShadow = this.add.rectangle(150, groundTopY, 40, 4, 0x000000, 0.5);
+    this.playerShadow.setDepth(2);
+    
+    // Player - position so feet are on ground
+    // Sprite is 125x250, scaled to PLAYER.SCALE
+    const playerScale = PLAYER.SCALE;
+    const playerHeight = 250 * playerScale;
+    const playerY = groundTopY - (playerHeight / 2); // Center of player above ground
+    this.player = this.physics.add.sprite(150, playerY, 'player');
     this.player.setCollideWorldBounds(true);
-    this.player.setBounce(0.1);
-    this.player.setGravityY(300);
-    this.player.setScale(0.8); // Adjusted for new frame size
+    this.player.setBounce(0);  // Remove bounce to prevent settling issues
+    this.player.setGravityY(PLAYER.GRAVITY);
+    this.player.setScale(playerScale);
+    this.player.setDepth(10); // Above ground and shadow
+    
+    // Set physics body size to match the visible character (not full frame)
+    // Character is roughly 80x180 within the 125x250 frame
+    this.player.body.setSize(60, 180);
+    this.player.body.setOffset(32, 35); // Center the hitbox on the character
     
     // Track if player is touching ground for jumping
     this.isPlayerOnGround = false;
@@ -241,6 +266,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.playerGlow.setScale(0.8);
     this.playerGlow.setBlendMode(Phaser.BlendModes.ADD);
     this.playerGlow.alpha = 0.3;
+    this.playerGlow.setDepth(9); // Just below player
     
     // Portals group
     this.portals = this.physics.add.group({
@@ -272,6 +298,72 @@ export default class RunnerScene extends Phaser.Scene {
     
     // Create particle emitters
     this.createParticleEmitters();
+    
+    // Listen for resize events
+    this.scale.on('resize', this.handleResize, this);
+  }
+
+  // Handle window resize to reposition elements
+  handleResize(gameSize) {
+    const width = gameSize.width;
+    const height = gameSize.height;
+    
+    // Recalculate ground level based on new height
+    const bottomUIHeight = UI.BOTTOM_FRAME_HEIGHT;
+    const groundHeight = UI.GROUND_HEIGHT;
+    const groundY = height - bottomUIHeight - groundHeight / 2;
+    const groundTopY = groundY - groundHeight / 2;
+    this.groundLevel = groundTopY;
+    
+    // Update background
+    if (this.background) {
+      this.background.setPosition(width / 2, height / 2);
+      this.background.setSize(width, height);
+    }
+    
+    // Update ground collider
+    if (this.ground && this.ground.getChildren().length > 0) {
+      const groundCollider = this.ground.getChildren()[0];
+      if (groundCollider && groundCollider.body) {
+        groundCollider.setPosition(width / 2, groundTopY + 10);
+        groundCollider.body.setSize(width * 2, 20);
+        groundCollider.body.updateFromGameObject();
+      }
+    }
+    
+    // Update ground tiles position
+    if (this.groundTiles) {
+      this.groundTiles.forEach(tile => {
+        tile.setY(groundY);
+      });
+    }
+    
+    // Extend ground tiles if needed
+    const neededTiles = Math.ceil((width + 128) / 64);
+    while (this.groundTiles && this.groundTiles.length < neededTiles) {
+      const lastTile = this.groundTiles[this.groundTiles.length - 1];
+      const tile = this.add.tileSprite(lastTile.x + 64, groundY, 64, 32, 'ground');
+      tile.setDepth(1);
+      this.groundTiles.push(tile);
+    }
+    
+    // Update player shadow position
+    if (this.playerShadow) {
+      this.playerShadow.setY(groundTopY);
+    }
+    
+    // Update player position to stay on the new ground level
+    if (this.player) {
+      const playerScale = PLAYER.SCALE;
+      const playerHeight = 250 * playerScale;
+      const playerY = groundTopY - (playerHeight / 2);
+      this.player.setY(playerY);
+      
+      // Also update player glow position
+      if (this.playerGlow) {
+        this.playerGlow.setY(playerY);
+      }
+    }
   }
 
   createAtmosphericParticles() {
@@ -288,13 +380,9 @@ export default class RunnerScene extends Phaser.Scene {
   }
 
   createFogLayers() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     
-    // Bottom fog
-    const fogBottom = this.add.rectangle(width / 2, height - 30, width, 60, 0x000000, 0.5);
-    fogBottom.setDepth(5);
-    
-    // Top fog
+    // Top fog only - bottom fog removed to avoid visual issues with ground
     const fogTop = this.add.rectangle(width / 2, 30, width, 60, 0x000000, 0.3);
     fogTop.setDepth(5);
   }
@@ -325,7 +413,7 @@ export default class RunnerScene extends Phaser.Scene {
     
     // Handle jumping with space bar - allow jump anytime
     if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-      this.player.setVelocityY(-450);
+      this.player.setVelocityY(PLAYER.JUMP_VELOCITY);
       this.lastJumpTime = time; // Track jump time for collision avoidance
     }
 
@@ -337,7 +425,8 @@ export default class RunnerScene extends Phaser.Scene {
     }
     
     if (this.playerShadow && this.player) {
-      this.playerShadow.setPosition(this.player.x, this.player.y + 50);
+      // Shadow stays at ground level, only moves horizontally with player
+      this.playerShadow.setPosition(this.player.x, this.groundLevel);
     }
     
     // Move ground tiles
@@ -400,9 +489,9 @@ export default class RunnerScene extends Phaser.Scene {
       }
     }
     
-    // Increase speed every 30 seconds
+    // Increase speed based on config interval
     if (time - this.lastSpeedIncreaseTime > this.speedIncreaseInterval) {
-      this.currentSpeed += 20;
+      this.currentSpeed += SPEED.INCREMENT;
       this.lastSpeedIncreaseTime = time;
     }
     
@@ -414,11 +503,16 @@ export default class RunnerScene extends Phaser.Scene {
   }
 
   spawnPortal() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     
-    const portal = this.portals.create(width + 50, height - 100, 'portal');
+    // Position portal so it sits on the ground
+    const portalHeight = 100 * 0.8; // Portal is 100px tall, scaled to 0.8
+    const portalY = this.groundLevel - portalHeight / 2;
+    
+    const portal = this.portals.create(width + 50, portalY, 'portal');
     portal.setScale(0.8);
     portal.setSize(40, 80);
+    portal.setDepth(8);
     
     // Create portal glow rings
     const rings = this.add.sprite(portal.x, portal.y, 'portal_rings');
@@ -493,11 +587,16 @@ export default class RunnerScene extends Phaser.Scene {
   }
 
   spawnDemogorgon() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     
-    const demogorgon = this.demogorgons.create(width + 50, height - 120, 'demogorgon');
+    // Position demogorgon so it sits on the ground
+    // Demogorgon sprite scaled to 0.2, estimate visible height
+    const demogorgonY = this.groundLevel - 50; // Adjust based on demogorgon visual height
+    
+    const demogorgon = this.demogorgons.create(width + 50, demogorgonY, 'demogorgon');
     demogorgon.setScale(0.2);
     demogorgon.setSize(10, 12);
+    demogorgon.setDepth(8);
     
     // Add a pulsing scale effect
     this.tweens.add({
@@ -520,7 +619,6 @@ export default class RunnerScene extends Phaser.Scene {
     
     if (currentTime - lastJumpTime < jumpWindow && player.body.velocity.y < 0) {
       // Player successfully jumped to avoid demogorgon - destroy demogorgon
-      console.log('✨ JUMPED OVER DEMOGORGON! Collision avoided!');
       demogorgon.destroy();
       this.currentEntityType = null;
       this.lastEntityDestroyedTime = this.time.now;
@@ -528,7 +626,6 @@ export default class RunnerScene extends Phaser.Scene {
     }
     
     // Collision not avoided - reduce score by 2
-    console.log('💀 DEMOGORGON HIT! Score reduced by 2');
     demogorgon.destroy();
     this.currentEntityType = null;
     this.lastEntityDestroyedTime = this.time.now;

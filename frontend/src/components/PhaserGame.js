@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import Phaser from 'phaser';
 import RunnerScene from '../game/RunnerScene';
 import UIScene from '../game/UIScene';
-import { useGame, INITIAL_SPEED } from '../context/GameContext';
+import { useGame } from '../context/GameContext';
+import { INITIAL_SPEED } from '../gameConfig';
 import { getRandomQuestion } from '../data/mockData';
 
 const PhaserGame = React.memo(() => {
@@ -18,6 +19,7 @@ const PhaserGame = React.memo(() => {
     handlePortalHit,
     handleDemogorgonHit,
     updateGlobalTime,
+    currentQuestion,
     setCurrentQuestion,
     setShowQuestionOverlay,
     pauseGame,
@@ -27,14 +29,22 @@ const PhaserGame = React.memo(() => {
     globalTimeLeft,
   } = useGame();
 
-  // Handle portal collision
+  // Handle portal collision - only get new question if there isn't one already
   const onPortalHit = useCallback(() => {
-    // Get question based on current difficulty
+    // Check if there's already an active question (e.g., restored from saved state)
+    // If so, don't fetch a new one
+    if (currentQuestion) {
+      pauseGame();
+      setShowQuestionOverlay(true);
+      return;
+    }
+    
+    // Get new question based on current difficulty
     const question = getRandomQuestion(difficulty.name);
     setCurrentQuestion(question);
     pauseGame();
     setShowQuestionOverlay(true);
-  }, [difficulty.name, setCurrentQuestion, pauseGame, setShowQuestionOverlay]);
+  }, [difficulty.name, currentQuestion, setCurrentQuestion, pauseGame, setShowQuestionOverlay]);
 
   // Handle game tick for time updates
   const onGameTick = useCallback((deltaSeconds) => {
@@ -59,11 +69,13 @@ const PhaserGame = React.memo(() => {
   useEffect(() => {
     if (!gameContainerRef.current || gameInstanceRef.current) return;
 
+    const containerHeight = gameContainerRef.current.clientHeight || 400;
+    
     const config = {
       type: Phaser.AUTO,
       parent: gameContainerRef.current,
       width: gameContainerRef.current.clientWidth,
-      height: 400,
+      height: containerHeight,
       backgroundColor: '#050505',
       render: {
         pixelArt: true,
@@ -82,10 +94,10 @@ const PhaserGame = React.memo(() => {
       },
       scene: [RunnerScene, UIScene],
       scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        expandParent: true,
-        fullscreenTarget: 'game',
+        mode: Phaser.Scale.RESIZE, // Use RESIZE mode for dynamic window changes
+        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
+        width: '100%',
+        height: containerHeight,
       },
     };
 
@@ -109,16 +121,25 @@ const PhaserGame = React.memo(() => {
       }
     });
 
-    // Handle resize
+    // Handle resize with debounce
+    let resizeTimeout;
     const handleResize = () => {
-      if (game && gameContainerRef.current) {
-        game.scale.resize(gameContainerRef.current.clientWidth, 400);
-      }
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (game && gameContainerRef.current) {
+          const newWidth = gameContainerRef.current.clientWidth;
+          const newHeight = gameContainerRef.current.clientHeight || 400;
+          // Trigger Phaser's internal resize which will emit the 'resize' event
+          game.scale.resize(newWidth, newHeight);
+          game.scale.refresh();
+        }
+      }, 100); // Debounce resize events
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       window.removeEventListener('resize', handleResize);
       if (gameInstanceRef.current) {
         gameInstanceRef.current.destroy(true);
@@ -173,7 +194,7 @@ const PhaserGame = React.memo(() => {
     <div 
       data-testid="phaser-game-container"
       ref={gameContainerRef}
-      className="w-full h-[400px] bg-black border-2 border-red-900/50 box-glow-red overflow-hidden"
+      className="w-full h-[300px] sm:h-[400px] bg-black border-2 border-red-900/50 box-glow-red overflow-hidden"
     />
   );
 });

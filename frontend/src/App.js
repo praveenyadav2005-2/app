@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GameProvider } from './context/GameContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import CRTOverlay from './components/CRTOverlay';
 import WelcomeScreen from './pages/WelcomeScreen';
 import InstructionsScreen from './pages/InstructionsScreen';
@@ -11,8 +12,9 @@ import './App.css';
 
 function App() {
   return (
-    <GameProvider>
-      <div className="App min-h-screen bg-black">
+    <ErrorBoundary>
+      <GameProvider>
+        <div className="App min-h-screen bg-black">
         {/* CRT/Visual Effects Overlay */}
         <CRTOverlay />
         
@@ -29,6 +31,7 @@ function App() {
         </BrowserRouter>
       </div>
     </GameProvider>
+    </ErrorBoundary>
   );
 }
 

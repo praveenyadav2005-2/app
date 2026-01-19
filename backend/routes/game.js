@@ -9,14 +9,19 @@ const router = express.Router();
 // Utility to validate MongoDB ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
+// Production-safe logging - only log in development
+const isDev = process.env.NODE_ENV !== 'production';
+const devLog = (...args) => isDev && console.log(...args);
+const devWarn = (...args) => isDev && console.warn(...args);
+
 // @route   POST /api/game/start
 // @desc    Start a new game session
 // @access  Private
 router.post('/start', authenticate, checkGameNotCompleted, async (req, res) => {
   try {
-    console.log('🎮 Game Start Request:');
-    console.log('  User ID:', req.user._id);
-    console.log('  Username:', req.user.username);
+    devLog('🎮 Game Start Request:');
+    devLog('  User ID:', req.user._id);
+    devLog('  Username:', req.user.username);
 
     // Check if user already has an active game
     let activeGame = await Game.findOne({
@@ -26,7 +31,7 @@ router.post('/start', authenticate, checkGameNotCompleted, async (req, res) => {
     });
 
     if (activeGame) {
-      console.log('⚠️ User already has an active game, returning existing game');
+      devLog('⚠️ User already has an active game, returning existing game');
       return res.json({
         success: true,
         message: 'Game session already active',
@@ -71,7 +76,7 @@ router.post('/start', authenticate, checkGameNotCompleted, async (req, res) => {
 
     await game.save();
 
-    console.log('✅ New game session started successfully');
+    devLog('✅ New game session started successfully');
 
     res.json({
       success: true,
@@ -199,16 +204,16 @@ router.put('/state', authenticate, checkGameNotCompleted, async (req, res) => {
     if (sanitizedHealth <= 0) {
       game.logEvent('game_over', { reason: 'health_depleted', finalScore: sanitizedScore });
       game.complete();
-      console.log('💀 Game over: Health depleted');
+      devLog('💀 Game over: Health depleted');
     } else if (sanitizedTimeLeft <= 0) {
       game.logEvent('time_over', { reason: 'time_expired', finalScore: sanitizedScore });
       game.complete();
-      console.log('⏰ Game over: Time expired');
+      devLog('⏰ Game over: Time expired');
     }
 
     await game.save();
 
-    console.log('✅ Game state updated successfully');
+    devLog('✅ Game state updated successfully');
 
     res.json({
       success: true,
@@ -243,9 +248,9 @@ router.put('/state', authenticate, checkGameNotCompleted, async (req, res) => {
 // @access  Private
 router.get('/state', authenticate, async (req, res) => {
   try {
-    console.log('📊 Get Game State Request:');
-    console.log('  User ID:', req.user._id);
-    console.log('  Username:', req.user.username);
+    devLog('📊 Get Game State Request:');
+    devLog('  User ID:', req.user._id);
+    devLog('  Username:', req.user.username);
 
     // Find active game
     const game = await Game.findOne({
@@ -298,12 +303,12 @@ router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) =
   try {
     const { score, portalsCleared, timeSurvived } = req.body;
 
-    console.log('🎮 Game Complete Request:');
-    console.log('  User ID:', req.user._id);
-    console.log('  Username:', req.user.username);
-    console.log('  Score:', score);
-    console.log('  Portals Cleared:', portalsCleared);
-    console.log('  Time Survived:', timeSurvived);
+    devLog('🎮 Game Complete Request:');
+    devLog('  User ID:', req.user._id);
+    devLog('  Username:', req.user.username);
+    devLog('  Score:', score);
+    devLog('  Portals Cleared:', portalsCleared);
+    devLog('  Time Survived:', timeSurvived);
 
     // Validate score data
     if (typeof score !== 'number' || score < 0) {
@@ -350,7 +355,7 @@ router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) =
       { new: true }
     ).select('-password');
 
-    console.log('✅ Game completed successfully:', {
+    devLog('✅ Game completed successfully:', {
       username: user.username,
       gameCompleted: user.gameCompleted,
       finalScore: user.finalScore
@@ -389,7 +394,7 @@ router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) =
 // @access  Public
 router.get('/leaderboard', async (req, res) => {
   try {
-    console.log('📊 Fetching leaderboard...');
+    devLog('📊 Fetching leaderboard...');
     
     // Fetch all completed games and sort by: score (desc), portals (desc), then time (desc)
     const leaderboard = await User.find({ gameCompleted: true })
@@ -397,10 +402,10 @@ router.get('/leaderboard', async (req, res) => {
       .sort({ finalScore: -1, portalsCleared: -1, timeSurvived: -1 })
       .limit(100);
 
-    console.log(`✅ Found ${leaderboard.length} completed games`);
+    devLog(`✅ Found ${leaderboard.length} completed games`);
     
     if (leaderboard.length > 0) {
-      console.log('Top players:', leaderboard.slice(0, 3).map(u => ({
+      devLog('Top players:', leaderboard.slice(0, 3).map(u => ({
         username: u.username,
         score: u.finalScore,
         portals: u.portalsCleared,

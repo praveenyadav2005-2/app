@@ -15,12 +15,9 @@ const InstructionsScreen = () => {
   // Force GameContext to sync with current user on mount
   React.useEffect(() => {
     const currentUsername = localStorage.getItem('username');
-    console.log('📋 [InstructionsScreen Mount] Current username:', currentUsername);
-    console.log('📋 [InstructionsScreen Mount] GameContext username:', gameContext.username);
     
     // Force a check by reading directly from localStorage
     if (currentUsername !== gameContext.username) {
-      console.warn('⚠️ [InstructionsScreen] GameContext out of sync! Forcing update...');
       // Trigger by setting and clearing a dummy value to force context to update
       // This is a workaround to force the GameContext to resync
       window.dispatchEvent(new Event('gameContextSync'));
@@ -32,12 +29,8 @@ const InstructionsScreen = () => {
     const checkGameStatus = async () => {
       try {
         const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        console.log('🔍 Checking game status for:', username);
-        console.log('📋 Token exists:', token ? 'YES' : 'NO');
         
         if (!token) {
-          console.warn('⚠️ No token found, redirecting to login');
           navigate('/');
           return;
         }
@@ -49,17 +42,13 @@ const InstructionsScreen = () => {
         });
 
         const data = await response.json();
-        console.log('📊 Game status response:', data);
 
         if (data.success && !data.canPlay) {
-          console.log('🚫 User has already completed the game');
           setGameAlreadyCompleted(true);
           setCheckError('You have already completed the game! Check the leaderboard to see your rank.');
-        } else if (data.success) {
-          console.log('✅ User can play the game');
         }
       } catch (err) {
-        console.error('❌ Error checking game status:', err);
+        console.error('Error checking game status:', err);
         setCheckError('Could not verify game status. Proceed at your own risk.');
       } finally {
         setIsChecking(false);

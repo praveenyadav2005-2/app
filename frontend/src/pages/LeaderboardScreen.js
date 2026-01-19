@@ -74,7 +74,7 @@ const LeaderboardScreen = () => {
   const formatTime = (seconds) => {
     if (!seconds) return '0s';
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = (seconds % 60).toFixed(2);
     if (mins === 0) return `${secs}s`;
     return `${mins}m ${secs}s`;
   };

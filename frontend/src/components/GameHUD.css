@@ -205,11 +205,30 @@
 }
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 1200px) {
+  .game-hud-container {
+    gap: 10px;
+  }
+
+  .hud-box {
+    padding: 10px 14px;
+    min-height: 60px;
+  }
+
+  .hud-score,
+  .hud-portals,
+  .hud-mode {
+    min-width: 120px;
+  }
+}
+
 @media (max-width: 1024px) {
   .game-hud-container {
     top: 12px;
     left: 12px;
     right: 12px;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
     gap: 8px;
   }
 
@@ -226,6 +245,17 @@
   .hud-box-content {
     font-size: 16px;
   }
+
+  .hud-score,
+  .hud-portals,
+  .hud-mode {
+    min-width: 100px;
+  }
+
+  .hud-timer-circle {
+    width: 90px;
+    height: 90px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -234,22 +264,75 @@
     top: 10px;
     left: 10px;
     right: 10px;
+    width: calc(100% - 20px);
     gap: 6px;
+    justify-content: space-around;
   }
 
   .hud-box {
     padding: 8px 10px;
     min-height: 40px;
     font-size: 12px;
+    flex: 1 1 auto;
+    min-width: 70px;
+  }
+
+  .hud-score,
+  .hud-portals,
+  .hud-mode {
+    min-width: 70px;
   }
 
   .hud-timer-circle {
     width: 60px;
     height: 60px;
+    order: -1; /* Move timer to start on mobile */
+    flex-shrink: 0;
   }
 
   .timer-text {
-    font-size: 22px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-hud-container {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+    gap: 4px;
+  }
+
+  .hud-box {
+    padding: 6px 8px;
+    min-height: 35px;
+    border-width: 2px;
+    border-radius: 8px;
+  }
+
+  .hud-box-label {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .hud-box-content {
+    font-size: 12px;
+  }
+
+  .health-heart {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+
+  .hud-timer-circle {
+    width: 50px;
+    height: 50px;
+  }
+
+  .timer-text {
+    font-size: 11px;
   }
 }
 

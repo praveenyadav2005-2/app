@@ -13,14 +13,6 @@ const GameOverScreen = () => {
   // Use current username from localStorage, not just from context
   const username = localStorage.getItem('username') || gameContext.username;
   
-  console.log('GameOverScreen - username from localStorage:', localStorage.getItem('username'));
-  console.log('GameOverScreen - username from context:', gameContext.username);
-  console.log('GameOverScreen - using username:', username);
-  console.log('GameOverScreen - score:', score, 'type:', typeof score);
-  console.log('GameOverScreen - portalsCleared:', portalsCleared);
-  console.log('GameOverScreen - timeSurvived:', timeSurvived);
-  console.log('GameOverScreen - health:', health);
-  
   const [showStats, setShowStats] = useState(false);
   const [isSavingScore, setIsSavingScore] = useState(false);
   const [scoreError, setScoreError] = useState('');
@@ -41,15 +33,12 @@ const GameOverScreen = () => {
     setIsSavingScore(true);
     try {
       const token = localStorage.getItem('token');
-      console.log('Token from localStorage:', token); // Debug log
       
       if (!token) {
         setScoreError('No authentication token found. Please login again.');
         console.error('Token not found in localStorage');
         return;
       }
-
-      console.log('📤 Sending score to backend:', { score, portalsCleared, timeSurvived, username });
 
       const response = await fetch(`${API_URL}/api/game/complete`, {
         method: 'POST',
@@ -65,17 +54,14 @@ const GameOverScreen = () => {
       });
 
       const data = await response.json();
-      console.log('✅ Score save response:', data);
 
       if (!response.ok) {
         setScoreError(data.message || 'Failed to save score');
-        console.error('❌ Score save error:', data);
-      } else {
-        console.log('✅ Score saved successfully for user:', username);
+        console.error('Score save error:', data);
       }
     } catch (err) {
       setScoreError('Network error: Could not save score');
-      console.error('❌ Score save network error:', err);
+      console.error('Score save network error:', err);
     } finally {
       setIsSavingScore(false);
     }
@@ -83,10 +69,6 @@ const GameOverScreen = () => {
 
   const handleViewLeaderboard = () => {
     navigate('/leaderboard');
-  };
-
-  const handlePlayAgain = () => {
-    navigate('/');
   };
 
   const isVictory = health > 0;
@@ -185,7 +167,7 @@ const GameOverScreen = () => {
                 <span className="font-vt323 text-lg text-gray-400">Time Survived</span>
               </div>
               <span data-testid="time-survived" className="font-vt323 text-2xl text-gray-300">
-                {`${Math.floor(timeSurvived / 60)}m ${timeSurvived % 60}s`}
+                {`${Math.floor(timeSurvived / 60)}m ${(timeSurvived % 60).toFixed(2)}s`}
               </span>
             </div>
 
@@ -220,14 +202,6 @@ const GameOverScreen = () => {
           >
             <Trophy className="inline w-5 h-5 mr-2" />
             VIEW LEADERBOARD
-          </Button>
-          
-          <Button
-            data-testid="play-again-btn"
-            onClick={handlePlayAgain}
-            className="flex-1 game-button border-gray-600 text-gray-400 hover:bg-gray-600 hover:text-black hover:border-gray-600"
-          >
-            TRY AGAIN
           </Button>
         </div>
 

@@ -105,12 +105,10 @@ const SecureStorage = {
       // Try to detect if this is old unencrypted JSON data
       // Old data would start with '{' or '[' (JSON)
       if (stored.startsWith('{') || stored.startsWith('[')) {
-        console.log('📦 [SecureStorage] Found legacy unencrypted data, migrating...');
         try {
           const legacyData = JSON.parse(stored);
           // Migrate to encrypted storage
           SecureStorage.setItem(key, legacyData, username);
-          console.log('✅ [SecureStorage] Legacy data migrated successfully');
           return legacyData;
         } catch (parseError) {
           console.error('Failed to parse legacy data:', parseError);
