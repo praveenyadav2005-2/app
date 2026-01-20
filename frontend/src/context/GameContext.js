@@ -184,6 +184,17 @@ export const GameProvider = ({ children }) => {
   
   // Phaser game reference
   const phaserGameRef = useRef(null);
+  
+  // Refs for rapidly-changing values (to avoid callback recreation on every tick)
+  const globalTimeLeftRef = useRef(globalTimeLeft);
+  const timeSurvivedRef = useRef(timeSurvived);
+  const scoreRef = useRef(score);
+  const lastResultRef = useRef(null);
+  
+  // Keep refs in sync with state
+  useEffect(() => { globalTimeLeftRef.current = globalTimeLeft; }, [globalTimeLeft]);
+  useEffect(() => { timeSurvivedRef.current = timeSurvived; }, [timeSurvived]);
+  useEffect(() => { scoreRef.current = score; }, [score]);
 
   // Function to reset all game state - MUST be defined before useEffect that uses it
   const resetGameState = useCallback(() => {
@@ -519,20 +530,20 @@ export const GameProvider = ({ children }) => {
       }
     }
     
-    // Update backend with game over status
+    // Update backend with game over status (use refs for rapidly-changing values)
     const action = health <= 0 ? 'game_over' : 'time_over';
     updateGameStateOnBackend(action, {
       health,
-      score,
+      score: scoreRef.current,
       portalsCleared,
       bonusesCleared,
       obstaclesHit,
       difficulty: difficulty.name,
       currentSpeed,
-      globalTimeLeft,
-      timeSurvived
+      globalTimeLeft: globalTimeLeftRef.current,
+      timeSurvived: timeSurvivedRef.current
     });
-  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend]);
+  }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend]);
 
   // Update difficulty based on portals cleared
   const updateDifficulty = useCallback((portals) => {
@@ -560,7 +571,7 @@ export const GameProvider = ({ children }) => {
     setScore(newScore);
     setObstaclesHit(newObstaclesHit);
     
-    // Update backend
+    // Update backend (use refs for rapidly-changing values)
     updateGameStateOnBackend('demogorgon_hit', {
       health,
       score: newScore,
@@ -569,10 +580,10 @@ export const GameProvider = ({ children }) => {
       obstaclesHit: newObstaclesHit,
       difficulty: difficulty.name,
       currentSpeed,
-      globalTimeLeft,
-      timeSurvived
+      globalTimeLeft: globalTimeLeftRef.current,
+      timeSurvived: timeSurvivedRef.current
     });
-  }, [score, obstaclesHit, health, portalsCleared, bonusesCleared, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend]);
+  }, [score, obstaclesHit, health, portalsCleared, bonusesCleared, difficulty, currentSpeed, updateGameStateOnBackend]);
 
   // Submit answer - allows retries on wrong answers (no health deduction until timeout or save me)
   const submitAnswer = useCallback((answer, timeRemaining, questionTimeLimit) => {
@@ -606,7 +617,7 @@ export const GameProvider = ({ children }) => {
       const newScore = Math.max(0, score + scoreDelta);
       setScore(newScore);
       
-      // Update backend with new game state
+      // Update backend with new game state (use refs for rapidly-changing values)
       updateGameStateOnBackend('answer_correct', {
         health: newHealth,
         score: newScore,
@@ -615,8 +626,8 @@ export const GameProvider = ({ children }) => {
         obstaclesHit,
         difficulty: difficulty.name,
         currentSpeed,
-        globalTimeLeft,
-        timeSurvived
+        globalTimeLeft: globalTimeLeftRef.current,
+        timeSurvived: timeSurvivedRef.current
       });
       
       const result = {
@@ -630,6 +641,7 @@ export const GameProvider = ({ children }) => {
       // Mark question as used only after correct answer
       markQuestionAsUsed(currentQuestion?.id);
       
+      lastResultRef.current = result;
       setLastResult(result);
       setShowQuestionOverlay(false);
       setQuestionTimeRemaining(null); // Clear saved question timer
@@ -647,7 +659,7 @@ export const GameProvider = ({ children }) => {
         allowRetry: true, // Flag to indicate user can retry
       };
     }
-  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, scoreMultiplier, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateDifficulty, updateGameStateOnBackend]);
+  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, scoreMultiplier, difficulty, currentSpeed, updateDifficulty, updateGameStateOnBackend]);
 
   // Use Save Me - skips the question but uses a life
   const useSaveMe = useCallback(() => {
@@ -657,18 +669,18 @@ export const GameProvider = ({ children }) => {
     // Determine if game should end
     const shouldEndGame = newHealth <= 0;
     
-    // Update backend with appropriate action
+    // Update backend with appropriate action (use refs for rapidly-changing values)
     const action = shouldEndGame ? 'game_over' : 'save_me_used';
     updateGameStateOnBackend(action, {
       health: newHealth,
-      score,
+      score: scoreRef.current,
       portalsCleared,
       bonusesCleared,
       obstaclesHit,
       difficulty: difficulty.name,
       currentSpeed,
-      globalTimeLeft,
-      timeSurvived
+      globalTimeLeft: globalTimeLeftRef.current,
+      timeSurvived: timeSurvivedRef.current
     });
     
     const result = {
@@ -683,6 +695,7 @@ export const GameProvider = ({ children }) => {
     // Mark question as used when skipped with Save Me
     markQuestionAsUsed(currentQuestion?.id);
     
+    lastResultRef.current = result;
     setLastResult(result);
     setShowQuestionOverlay(false);
     setQuestionTimeRemaining(null); // Clear saved question timer
@@ -702,7 +715,7 @@ export const GameProvider = ({ children }) => {
     }
     
     return result;
-  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend, currentQuestion]);
+  }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, currentQuestion]);
 
   // Handle timeout
   const handleTimeout = useCallback(() => {
@@ -712,18 +725,18 @@ export const GameProvider = ({ children }) => {
     // Determine if game should end
     const shouldEndGame = newHealth <= 0;
     
-    // Update backend for timeout with appropriate action
+    // Update backend for timeout with appropriate action (use refs for rapidly-changing values)
     const action = shouldEndGame ? 'game_over' : 'answer_incorrect';
     updateGameStateOnBackend(action, {
       health: newHealth,
-      score,
+      score: scoreRef.current,
       portalsCleared,
       bonusesCleared,
       obstaclesHit,
       difficulty: difficulty.name,
       currentSpeed,
-      globalTimeLeft,
-      timeSurvived
+      globalTimeLeft: globalTimeLeftRef.current,
+      timeSurvived: timeSurvivedRef.current
     });
     
     const result = {
@@ -738,6 +751,7 @@ export const GameProvider = ({ children }) => {
     // Mark question as used when time runs out
     markQuestionAsUsed(currentQuestion?.id);
     
+    lastResultRef.current = result;
     setLastResult(result);
     setShowQuestionOverlay(false);
     setQuestionTimeRemaining(null); // Clear saved question timer
@@ -757,19 +771,19 @@ export const GameProvider = ({ children }) => {
     }
     
     return result;
-  }, [health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, globalTimeLeft, timeSurvived, updateGameStateOnBackend, currentQuestion]);
+  }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, currentQuestion]);
 
   // Close result overlay
   const closeResultOverlay = useCallback(() => {
     setShowResultOverlay(false);
     setCurrentQuestion(null);
     
-    if (lastResult?.continueGame) {
+    if (lastResultRef.current?.continueGame) {
       resumeGame();
     } else {
       endGame();
     }
-  }, [lastResult, resumeGame, endGame]);
+  }, [resumeGame, endGame]);
 
   // Apply power-up
   const applyPowerUp = useCallback((type) => {
@@ -801,28 +815,95 @@ export const GameProvider = ({ children }) => {
   // Refs for throttling state updates (to avoid re-rendering 60 times per second)
   const timeAccumulator = useRef(0);
   const UPDATE_INTERVAL = 0.1; // Update state every 100ms instead of every frame
-
-  // Update global timer
-  const updateGlobalTime = useCallback((deltaSeconds) => {
-    timeAccumulator.current += deltaSeconds;
+  
+  // Independent global timer that runs regardless of Phaser pause state
+  // This ensures the timer keeps running during question overlays and in the background
+  const globalTimerRef = useRef(null);
+  const lastTickTimeRef = useRef(null);
+  
+  // Start/stop the independent global timer based on game status
+  useEffect(() => {
+    // Timer should run when game is 'playing' OR 'paused' (paused = question overlay active)
+    const shouldTimerRun = gameStatus === 'playing' || gameStatus === 'paused';
     
-    // Only update state every UPDATE_INTERVAL seconds to reduce re-renders
-    if (timeAccumulator.current >= UPDATE_INTERVAL) {
-      const accumulatedTime = timeAccumulator.current;
-      timeAccumulator.current = 0;
+    if (shouldTimerRun && !globalTimerRef.current) {
+      // Start the independent timer
+      lastTickTimeRef.current = Date.now();
       
-      setGlobalTimeLeft(prev => {
-        const newTime = prev - accumulatedTime;
-        if (newTime <= 0) {
-          endGame();
-          return 0;
-        }
-        return newTime;
-      });
-      setTimeSurvived(prev => prev + accumulatedTime);
-      setScore(prev => prev + Math.floor(accumulatedTime * SCORING.DISTANCE_PER_SECOND));
+      globalTimerRef.current = setInterval(() => {
+        const now = Date.now();
+        const deltaSeconds = (now - lastTickTimeRef.current) / 1000;
+        lastTickTimeRef.current = now;
+        
+        setGlobalTimeLeft(prev => {
+          const newTime = prev - deltaSeconds;
+          if (newTime <= 0) {
+            // Clear timer and end game
+            if (globalTimerRef.current) {
+              clearInterval(globalTimerRef.current);
+              globalTimerRef.current = null;
+            }
+            // Trigger end game on next tick to avoid state update during render
+            setTimeout(() => endGame(), 0);
+            return 0;
+          }
+          return newTime;
+        });
+        
+        setTimeSurvived(prev => prev + deltaSeconds);
+        setScore(prev => prev + Math.floor(deltaSeconds * SCORING.DISTANCE_PER_SECOND));
+      }, 100); // Update every 100ms
+    } else if (!shouldTimerRun && globalTimerRef.current) {
+      // Stop the timer when game ends or is idle
+      clearInterval(globalTimerRef.current);
+      globalTimerRef.current = null;
+      lastTickTimeRef.current = null;
     }
+    
+    // Cleanup on unmount
+    return () => {
+      if (globalTimerRef.current) {
+        clearInterval(globalTimerRef.current);
+        globalTimerRef.current = null;
+      }
+    };
+  }, [gameStatus, endGame]);
+
+  // Handle visibility change to catch up timer when tab becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && lastTickTimeRef.current) {
+        // Tab became visible - catch up the elapsed time
+        const now = Date.now();
+        const deltaSeconds = (now - lastTickTimeRef.current) / 1000;
+        lastTickTimeRef.current = now;
+        
+        if (deltaSeconds > 0.2) { // Only catch up if more than 200ms passed
+          setGlobalTimeLeft(prev => {
+            const newTime = prev - deltaSeconds;
+            if (newTime <= 0) {
+              setTimeout(() => endGame(), 0);
+              return 0;
+            }
+            return newTime;
+          });
+          
+          setTimeSurvived(prev => prev + deltaSeconds);
+          setScore(prev => prev + Math.floor(deltaSeconds * SCORING.DISTANCE_PER_SECOND));
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [endGame]);
+
+  // Update global timer - now only used for Phaser frame updates (deprecated, kept for compatibility)
+  // The independent timer above handles the actual time tracking
+  const updateGlobalTime = useCallback((deltaSeconds) => {
+    // No-op: Global timer is now handled independently via setInterval
+    // This function is kept for backward compatibility with PhaserGame.js
+  }, []);
 
   // Update speed
   const updateSpeed = useCallback(() => {
