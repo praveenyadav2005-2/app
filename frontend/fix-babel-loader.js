@@ -11,8 +11,10 @@ if (fs.existsSync(babelLoaderPath)) {
   if (content.includes('const validateOptions = require("schema-utils");')) {
     content = content.replace(
       'const validateOptions = require("schema-utils");',
-      `const { validate } = require("schema-utils");
-// Compatibility shim: babel-loader expects validateOptions but schema-utils@3.x exports validate
+      `const schemaUtils = require("schema-utils");
+// Compatibility shim: handle multiple export shapes from schema-utils
+// (it may export the validate function directly or as a named/default export)
+const validate = typeof schemaUtils === 'function' ? schemaUtils : (schemaUtils && (schemaUtils.validate || schemaUtils.default)) || schemaUtils;
 const validateOptions = (schema, options, name) => {
   return validate(schema, options, name);
 };`

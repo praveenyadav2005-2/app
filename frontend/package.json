@@ -42,9 +42,9 @@
     "lucide-react": "^0.507.0",
     "next-themes": "^0.4.6",
     "phaser": "^3.90.0",
-    "react": "^18.3.1",
+    "react": "^18.0.0",
     "react-day-picker": "8.10.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^18.0.0",
     "react-hook-form": "^7.56.2",
     "react-resizable-panels": "^3.0.1",
     "react-router-dom": "^7.5.1",
@@ -59,7 +59,7 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
-    "postinstall": "node fix-babel-loader.js"
+    "postinstall": "node fix-babel-loader.js && node fix-terser-webpack-plugin.js && node fix-css-minimizer-webpack-plugin.js"
   },
   "browserslist": {
     "production": [
@@ -85,14 +85,13 @@
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.2.0",
     "postcss": "^8.4.49",
-    "schema-utils": "3.3.0",
     "tailwindcss": "^3.4.17"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "overrides": {
     "ajv": "6.12.6",
     "ajv-keywords": "3.5.2",
-    "schema-utils": "3.3.0",
+      "schema-utils": "3.3.0",
     "eslint": "^8.57.0"
   }
 }
