@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Skull, Target, Clock, Zap, Trophy } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -16,21 +16,33 @@ const GameOverScreen = () => {
   const [showStats, setShowStats] = useState(false);
   const [isSavingScore, setIsSavingScore] = useState(false);
   const [scoreError, setScoreError] = useState('');
+  
+  // Track if score has already been saved to prevent duplicate calls
+  const scoreSavedRef = useRef(false);
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
     // Animate stats appearance
     const timer = setTimeout(() => setShowStats(true), 500);
 
-    // Save score to database (even if score is 0)
-    if (username) {
+    // Save score to database (even if score is 0) - only once
+    if (username && !scoreSavedRef.current && !isSavingRef.current) {
       saveScoreToDB();
     }
 
     return () => clearTimeout(timer);
-  }, [username, score, portalsCleared, timeSurvived]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
-  const saveScoreToDB = async () => {
+  const saveScoreToDB = useCallback(async () => {
+    // Prevent duplicate saves
+    if (scoreSavedRef.current || isSavingRef.current) {
+      return;
+    }
+    
+    isSavingRef.current = true;
     setIsSavingScore(true);
+    
     try {
       const token = localStorage.getItem('token');
       
@@ -58,14 +70,18 @@ const GameOverScreen = () => {
       if (!response.ok) {
         setScoreError(data.message || 'Failed to save score');
         console.error('Score save error:', data);
+      } else {
+        // Mark as successfully saved
+        scoreSavedRef.current = true;
       }
     } catch (err) {
       setScoreError('Network error: Could not save score');
       console.error('Score save network error:', err);
     } finally {
+      isSavingRef.current = false;
       setIsSavingScore(false);
     }
-  };
+  }, [score, portalsCleared, timeSurvived]);
 
   const handleViewLeaderboard = () => {
     navigate('/leaderboard');

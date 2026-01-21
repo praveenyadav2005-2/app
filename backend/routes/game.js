@@ -201,17 +201,36 @@ router.put('/state', authenticate, checkGameNotCompleted, async (req, res) => {
     }
 
     // Check if game should end
+    let gameEnded = false;
     if (sanitizedHealth <= 0) {
       game.logEvent('game_over', { reason: 'health_depleted', finalScore: sanitizedScore });
       game.complete();
+      gameEnded = true;
       devLog('💀 Game over: Health depleted');
     } else if (sanitizedTimeLeft <= 0) {
       game.logEvent('time_over', { reason: 'time_expired', finalScore: sanitizedScore });
       game.complete();
+      gameEnded = true;
       devLog('⏰ Game over: Time expired');
     }
 
     await game.save();
+
+    // If game ended, also update User model with final score for leaderboard
+    if (gameEnded && !req.user.gameCompleted) {
+      await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          gameCompleted: true,
+          gameCompletedAt: new Date(),
+          finalScore: sanitizedScore,
+          portalsCleared: sanitizedPortals,
+          timeSurvived: sanitizedTimeSurvived,
+          updatedAt: new Date()
+        }
+      );
+      devLog('✅ User completion status updated with final score:', sanitizedScore);
+    }
 
     devLog('✅ Game state updated successfully');
 
@@ -299,7 +318,7 @@ router.get('/state', authenticate, async (req, res) => {
 // @route   POST /api/game/complete
 // @desc    Mark game as completed for the user with final score
 // @access  Private
-router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) => {
+router.post('/complete', authenticate, async (req, res) => {
   try {
     const { score, portalsCleared, timeSurvived } = req.body;
 
@@ -310,6 +329,26 @@ router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) =
     devLog('  Portals Cleared:', portalsCleared);
     devLog('  Time Survived:', timeSurvived);
 
+    // Check if user already completed the game - return success with existing data (idempotent)
+    if (req.user.gameCompleted) {
+      devLog('ℹ️ User already completed the game, returning existing data');
+      return res.json({
+        success: true,
+        message: 'Game already completed',
+        alreadyCompleted: true,
+        user: {
+          id: req.user._id,
+          username: req.user.username,
+          email: req.user.email,
+          gameCompleted: req.user.gameCompleted,
+          gameCompletedAt: req.user.gameCompletedAt,
+          finalScore: req.user.finalScore,
+          portalsCleared: req.user.portalsCleared,
+          timeSurvived: req.user.timeSurvived
+        }
+      });
+    }
+
     // Validate score data
     if (typeof score !== 'number' || score < 0) {
       console.error('❌ Invalid score data:', score);
@@ -319,25 +358,25 @@ router.post('/complete', authenticate, checkGameNotCompleted, async (req, res) =
       });
     }
 
-    // Find active game
+    // Find active or recently completed game (may have been completed by state update)
     const game = await Game.findOne({
-      userId: req.user._id,
-      isPlaying: true,
-      isCompleted: false
-    });
+      userId: req.user._id
+    }).sort({ lastUpdated: -1 });
 
     if (!game) {
       return res.status(404).json({
         success: false,
-        message: 'No active game found'
+        message: 'No game found'
       });
     }
 
-    // Update game with final values and mark as completed
+    // Update game with final values and mark as completed (if not already)
     game.score = score;
     game.portalsCleared = portalsCleared || game.portalsCleared;
     game.timeSurvived = timeSurvived || game.timeSurvived;
-    game.complete();
+    if (!game.isCompleted) {
+      game.complete();
+    }
 
     await game.save();
 
