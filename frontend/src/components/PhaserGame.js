@@ -15,7 +15,6 @@ const PhaserGame = React.memo(() => {
     phaserGameRef,
     gameStatus,
     difficulty,
-    speedMultiplier,
     handlePortalHit,
     handleDemogorgonHit,
     updateGlobalTime,
@@ -165,16 +164,6 @@ const PhaserGame = React.memo(() => {
       scene.stopGame();
     }
   }, [gameStatus]);
-
-  // Update speed multiplier
-  useEffect(() => {
-    if (!gameInstanceRef.current) return;
-
-    const scene = gameInstanceRef.current.scene.scenes[0];
-    if (scene) {
-      scene.setSpeedMultiplier(speedMultiplier);
-    }
-  }, [speedMultiplier]);
 
   // Update UI HUD with game data
   useEffect(() => {

@@ -177,11 +177,6 @@ export const GameProvider = ({ children }) => {
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   
-  // Power-ups
-  const [activePowerUps, setActivePowerUps] = useState([]);
-  const [speedMultiplier, setSpeedMultiplier] = useState(1);
-  const [scoreMultiplier, setScoreMultiplier] = useState(1);
-  
   // Phaser game reference
   const phaserGameRef = useRef(null);
   
@@ -208,9 +203,6 @@ export const GameProvider = ({ children }) => {
     setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
     setTimeSurvived(0);
     setCurrentSpeed(INITIAL_SPEED);
-    setActivePowerUps([]);
-    setSpeedMultiplier(1);
-    setScoreMultiplier(1);
     setShowQuestionOverlay(false);
     setShowResultOverlay(false);
     setCurrentQuestion(null);
@@ -237,8 +229,6 @@ export const GameProvider = ({ children }) => {
         globalTimeLeft,
         timeSurvived,
         currentSpeed,
-        speedMultiplier,
-        scoreMultiplier,
         // Save question state for resume after refresh
         currentQuestion,
         showQuestionOverlay,
@@ -247,7 +237,7 @@ export const GameProvider = ({ children }) => {
       };
       saveGameState(stateToSave);
     }
-  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, currentQuestion, showQuestionOverlay, questionTimeRemaining, saveGameState]);
+  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, currentQuestion, showQuestionOverlay, questionTimeRemaining, saveGameState]);
 
   // Save state with fresh timestamp when user leaves the page
   useEffect(() => {
@@ -264,8 +254,6 @@ export const GameProvider = ({ children }) => {
           globalTimeLeft,
           timeSurvived,
           currentSpeed,
-          speedMultiplier,
-          scoreMultiplier,
           // Save question state for resume after refresh
           currentQuestion,
           showQuestionOverlay,
@@ -299,7 +287,7 @@ export const GameProvider = ({ children }) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, speedMultiplier, scoreMultiplier, currentQuestion, showQuestionOverlay, questionTimeRemaining, currentUsername, getGameStateKey]);
+  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, currentQuestion, showQuestionOverlay, questionTimeRemaining, currentUsername, getGameStateKey]);
 
   // Check for username changes on every render
   React.useEffect(() => {
@@ -391,8 +379,6 @@ export const GameProvider = ({ children }) => {
       setGlobalTimeLeft(adjustedTimeLeft); // Use adjusted time!
       setTimeSurvived(existingSavedState.timeSurvived ?? 0);
       setCurrentSpeed(existingSavedState.currentSpeed ?? INITIAL_SPEED);
-      setSpeedMultiplier(existingSavedState.speedMultiplier ?? 1);
-      setScoreMultiplier(existingSavedState.scoreMultiplier ?? 1);
       
       // Restore question state if there was an active question
       // Note: Question state may already be initialized from savedState during component mount
@@ -422,9 +408,6 @@ export const GameProvider = ({ children }) => {
     setGlobalTimeLeft(GLOBAL_TIME_LIMIT);
     setTimeSurvived(0);
     setCurrentSpeed(INITIAL_SPEED);
-    setActivePowerUps([]);
-    setSpeedMultiplier(1);
-    setScoreMultiplier(1);
     setGameStatus('playing');
     // Clear previous game state from encrypted storage for current user
     if (currentUsername) {
@@ -594,25 +577,15 @@ export const GameProvider = ({ children }) => {
     
     let scoreDelta = 0;
     let newHealth = health;
-    let powerUp = null;
     let newPortals = portalsCleared;
     let newBonuses = bonusesCleared;
     
     if (isCorrect) {
-      scoreDelta = SCORING.CORRECT_ANSWER * scoreMultiplier;
+      scoreDelta = SCORING.CORRECT_ANSWER;
       
       newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
       updateDifficulty(newPortals);
-      
-      // Random power-up chance (20%)
-      if (Math.random() < 0.2) {
-        const powerUps = ['hawkins_stabilizer', 'lab_medkit', 'signal_booster'];
-        powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
-        applyPowerUp(powerUp);
-        newBonuses = bonusesCleared + 1;
-        setBonusesCleared(newBonuses);
-      }
       
       const newScore = Math.max(0, score + scoreDelta);
       setScore(newScore);
@@ -634,7 +607,6 @@ export const GameProvider = ({ children }) => {
         correct: true,
         newHealth,
         scoreDelta,
-        powerUp,
         continueGame: newHealth > 0,
       };
       
@@ -654,12 +626,11 @@ export const GameProvider = ({ children }) => {
         correct: false,
         newHealth: health,
         scoreDelta: 0,
-        powerUp: null,
         continueGame: true,
         allowRetry: true, // Flag to indicate user can retry
       };
     }
-  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, scoreMultiplier, difficulty, currentSpeed, updateDifficulty, updateGameStateOnBackend]);
+  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, difficulty, currentSpeed, updateDifficulty, updateGameStateOnBackend]);
 
   // Use Save Me - skips the question but uses a life
   const useSaveMe = useCallback(() => {
@@ -687,7 +658,6 @@ export const GameProvider = ({ children }) => {
       correct: false,
       newHealth,
       scoreDelta: 0,
-      powerUp: null,
       continueGame: newHealth > 0,
       savedWithLife: true,
     };
@@ -743,7 +713,6 @@ export const GameProvider = ({ children }) => {
       correct: false,
       newHealth,
       scoreDelta: 0,
-      powerUp: null,
       continueGame: newHealth > 0,
       timeout: true,
     };
@@ -785,33 +754,6 @@ export const GameProvider = ({ children }) => {
     }
   }, [resumeGame, endGame]);
 
-  // Apply power-up
-  const applyPowerUp = useCallback((type) => {
-    switch (type) {
-      case 'hawkins_stabilizer':
-        setSpeedMultiplier(0.5);
-        setActivePowerUps(prev => [...prev, { type, expiresAt: Date.now() + 10000 }]);
-        setTimeout(() => {
-          setSpeedMultiplier(1);
-          setActivePowerUps(prev => prev.filter(p => p.type !== type));
-        }, 10000);
-        break;
-      case 'lab_medkit':
-        setHealth(prev => Math.min(MAX_HEALTH, prev + 1));
-        break;
-      case 'signal_booster':
-        setScoreMultiplier(2);
-        setActivePowerUps(prev => [...prev, { type, expiresAt: Date.now() + 20000 }]);
-        setTimeout(() => {
-          setScoreMultiplier(1);
-          setActivePowerUps(prev => prev.filter(p => p.type !== type));
-        }, 20000);
-        break;
-      default:
-        break;
-    }
-  }, []);
-
   // Refs for throttling state updates (to avoid re-rendering 60 times per second)
   const timeAccumulator = useRef(0);
   const UPDATE_INTERVAL = 0.1; // Update state every 100ms instead of every frame
@@ -851,7 +793,6 @@ export const GameProvider = ({ children }) => {
         });
         
         setTimeSurvived(prev => prev + deltaSeconds);
-        setScore(prev => prev + Math.floor(deltaSeconds * SCORING.DISTANCE_PER_SECOND));
       }, 100); // Update every 100ms
     } else if (!shouldTimerRun && globalTimerRef.current) {
       // Stop the timer when game ends or is idle
@@ -889,7 +830,6 @@ export const GameProvider = ({ children }) => {
           });
           
           setTimeSurvived(prev => prev + deltaSeconds);
-          setScore(prev => prev + Math.floor(deltaSeconds * SCORING.DISTANCE_PER_SECOND));
         }
       }
     };
@@ -948,11 +888,6 @@ export const GameProvider = ({ children }) => {
     showResultOverlay,
     lastResult,
     
-    // Power-ups
-    activePowerUps,
-    speedMultiplier,
-    scoreMultiplier,
-    
     // Phaser ref
     phaserGameRef,
     
@@ -968,7 +903,6 @@ export const GameProvider = ({ children }) => {
     useSaveMe,
     handleTimeout,
     closeResultOverlay,
-    applyPowerUp,
     updateGlobalTime,
     updateSpeed,
     setCurrentQuestion,

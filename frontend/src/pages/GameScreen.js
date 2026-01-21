@@ -62,7 +62,7 @@ const GameScreen = () => {
       {/* HUD Bar */}
       <GameHUD
         health={health}
-        maxHealth={3}
+        maxHealth={5}
         score={score}
         portalsCleared={portalsCleared}
         difficulty={difficulty?.name || 'HARD'}

@@ -57,7 +57,7 @@ router.post('/start', authenticate, checkGameNotCompleted, async (req, res) => {
       userId: req.user._id,
       username: req.user.username,
       isPlaying: true,
-      health: 3,
+      health: 5,
       score: 0,
       portalsCleared: 0,
       bonusesCleared: 0,
@@ -70,7 +70,7 @@ router.post('/start', authenticate, checkGameNotCompleted, async (req, res) => {
 
     // Log game start event
     game.logEvent('game_start', {
-      initialHealth: 3,
+      initialHealth: 5,
       initialTime: 7200
     });
 
@@ -133,7 +133,7 @@ router.put('/state', authenticate, checkGameNotCompleted, async (req, res) => {
     }
 
     // SECURITY: Validate value ranges to prevent cheating
-    const sanitizedHealth = Math.max(0, Math.min(3, Math.floor(health)));
+    const sanitizedHealth = Math.max(0, Math.min(5, Math.floor(health)));
     const sanitizedScore = Math.max(0, Math.floor(score));
     const sanitizedPortals = Math.max(0, Math.floor(portalsCleared || 0));
     const sanitizedBonuses = Math.max(0, Math.floor(bonusesCleared || 0));

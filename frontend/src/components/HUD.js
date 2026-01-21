@@ -5,7 +5,7 @@ import { MAX_HEALTH } from '../gameConfig';
 import { formatLongTime } from '../data/mockData';
 
 const HUD = () => {
-  const { health, score, globalTimeLeft, portalsCleared, activePowerUps, difficulty } = useGame();
+  const { health, score, globalTimeLeft, portalsCleared, difficulty } = useGame();
 
   return (
     <div 
@@ -66,24 +66,6 @@ const HUD = () => {
             {formatLongTime(globalTimeLeft)}
           </p>
         </div>
-
-        {/* Active Power-ups */}
-        {activePowerUps.length > 0 && (
-          <div data-testid="powerups-display" className="flex items-center gap-3 px-4 py-2 bg-purple-950/20 border border-purple-900/40 rounded">
-            <span className="text-gray-400 text-xs font-code uppercase tracking-widest">Active:</span>
-            <div className="flex gap-2">
-              {activePowerUps.map((powerUp, i) => (
-                <div 
-                  key={i}
-                  className="px-3 py-1 bg-purple-900/40 border border-purple-500/60 rounded text-xs font-code text-purple-300 powerup-active font-bold"
-                >
-                  {powerUp.type === 'hawkins_stabilizer' && '🔷 SLOW'}
-                  {powerUp.type === 'signal_booster' && '⚡ 2X SCORE'}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

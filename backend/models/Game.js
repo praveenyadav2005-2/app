@@ -23,9 +23,9 @@ const gameSchema = new mongoose.Schema({
   // Game stats
   health: {
     type: Number,
-    default: 3,
+    default: 5,
     min: 0,
-    max: 3
+    max: 5
   },
   score: {
     type: Number,

@@ -18,7 +18,7 @@ import UIScene from '../game/UIScene';
 
 const PhaserGame = () => {
   const [gameState, setGameState] = useState({
-    health: 3,
+    health: 5,
     score: 0,
     portalsCleared: 0,
     maxPortals: 5,
@@ -76,7 +76,7 @@ const PhaserGame = () => {
       <div id="phaser-container"></div>
       <GameHUD
         health={gameState.health}
-        maxHealth={3}
+        maxHealth={5}
         score={gameState.score}
         portalsCleared={gameState.portalsCleared}
         maxPortals={gameState.maxPortals}
@@ -116,7 +116,7 @@ const GameScreen = () => {
       <div id="phaser-container"></div>
       <GameHUD
         health={health}
-        maxHealth={3}
+        maxHealth={5}
         score={score}
         portalsCleared={portalsCleared}
         maxPortals={maxPortals}
@@ -210,7 +210,7 @@ GameHUD Props:
 Example usage:
 <GameHUD
   health={3}
-  maxHealth={3}
+  maxHealth={5}
   score={15000}
   portalsCleared={2}
   maxPortals={5}

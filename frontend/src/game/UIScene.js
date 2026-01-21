@@ -5,7 +5,7 @@ export default class UIScene extends Phaser.Scene {
     super({ key: 'UIScene' });
     this.gameScene = null;
     this.gameData = {
-      health: 3,
+      health: 5,
       score: 0,
       portalsCleared: 0,
       difficulty: 'EASY',

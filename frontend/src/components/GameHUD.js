@@ -50,7 +50,7 @@ const CircularTimer = ({ timeLeft, maxTime = 300 }) => {
  * HealthBar Component
  * Displays health as a series of hearts
  */
-const HealthBar = ({ health, maxHealth = 3 }) => {
+const HealthBar = ({ health, maxHealth = 5 }) => {
   return (
     <div className="health-bar-container">
       {Array.from({ length: maxHealth }).map((_, i) => (
@@ -69,8 +69,8 @@ const HealthBar = ({ health, maxHealth = 3 }) => {
  * GameHUD Component
  * Main HUD overlay with all game information
  * Props:
- *  - health: current health (0-3)
- *  - maxHealth: maximum health (default 3)
+ *  - health: current health (0-5)
+ *  - maxHealth: maximum health (default 5)
  *  - score: current score
  *  - portalsCleared: number of portals cleared
  *  - difficulty: current difficulty text (e.g., "EASY", "NORMAL", "HARD")
@@ -78,8 +78,8 @@ const HealthBar = ({ health, maxHealth = 3 }) => {
  *  - maxTime: maximum time (default 300)
  */
 const GameHUD = ({
-  health = 3,
-  maxHealth = 3,
+  health = 5,
+  maxHealth = 5,
   score = 0,
   portalsCleared = 0,
   difficulty = 'HARD',

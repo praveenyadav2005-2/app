@@ -9,8 +9,8 @@
 // PLAYER SETTINGS
 // ===========================================
 export const PLAYER = {
-  INITIAL_HEALTH: 3,
-  MAX_HEALTH: 3,
+  INITIAL_HEALTH: 5,
+  MAX_HEALTH: 5,
   SCALE: 0.8,
   JUMP_VELOCITY: -450,
   GRAVITY: 300,
@@ -70,7 +70,6 @@ export const DIFFICULTY_PROGRESSION = {
 // ===========================================
 export const SCORING = {
   CORRECT_ANSWER: 100,
-  DISTANCE_PER_SECOND: 1,
   DEMOGORGON_PENALTY: 2,
 };
 

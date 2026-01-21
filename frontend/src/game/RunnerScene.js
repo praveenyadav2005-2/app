@@ -12,7 +12,6 @@ export default class RunnerScene extends Phaser.Scene {
     this.demogorgons = null;
     this.background = null;
     this.currentSpeed = SPEED.INITIAL;
-    this.speedMultiplier = 1;
     this.lastPortalTime = 0;
     this.portalSpawnInterval = SPAWN.PORTAL_INTERVAL;
     this.gameStartTime = 0;
@@ -39,7 +38,6 @@ export default class RunnerScene extends Phaser.Scene {
     this.onGameTick = data.onGameTick || (() => {});
     this.onDemogorgonHit = data.onDemogorgonHit || (() => {});
     this.currentSpeed = data.initialSpeed || SPEED.INITIAL;
-    this.speedMultiplier = 1;
   }
 
   preload() {
@@ -417,7 +415,7 @@ export default class RunnerScene extends Phaser.Scene {
       this.lastJumpTime = time; // Track jump time for collision avoidance
     }
 
-    const effectiveSpeed = this.currentSpeed * this.speedMultiplier;
+    const effectiveSpeed = this.currentSpeed;
     
     // Update player glow and shadow positions
     if (this.playerGlow && this.player) {
@@ -648,9 +646,7 @@ export default class RunnerScene extends Phaser.Scene {
     this.tweens.resumeAll();
   }
 
-  setSpeedMultiplier(multiplier) {
-    this.speedMultiplier = multiplier;
-  }
+
 
   stopGame() {
     this.isGameActive = false;

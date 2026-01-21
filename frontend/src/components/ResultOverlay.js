@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { CheckCircle, XCircle, Zap, Heart, Gift } from 'lucide-react';
+import { CheckCircle, XCircle, Zap, Heart } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 const ResultOverlay = () => {
@@ -75,19 +75,7 @@ const ResultOverlay = () => {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Heart className="w-5 h-5 text-red-500" />
             <span className="font-vt323 text-xl text-red-400">
-              Health: {lastResult.newHealth} / 3
-            </span>
-          </div>
-        )}
-
-        {/* Power-up notification */}
-        {lastResult.powerUp && (
-          <div data-testid="powerup-notification" className="flex items-center justify-center gap-3 mt-4 p-3 bg-purple-900/30 border border-purple-500 rounded">
-            <Gift className="w-6 h-6 text-purple-400" />
-            <span className="font-vt323 text-lg text-purple-300">
-              {lastResult.powerUp === 'hawkins_stabilizer' && 'HAWKINS STABILIZER - Speed x0.5 for 10s!'}
-              {lastResult.powerUp === 'lab_medkit' && 'LAB MED-KIT - +1 Health!'}
-              {lastResult.powerUp === 'signal_booster' && 'SIGNAL BOOSTER - 2x Score for 20s!'}
+              Health: {lastResult.newHealth} / 5
             </span>
           </div>
         )}
