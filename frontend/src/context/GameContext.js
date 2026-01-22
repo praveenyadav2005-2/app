@@ -141,6 +141,7 @@ export const GameProvider = ({ children }) => {
   // Score is preserved exactly as it was when player left (no bonus while away)
   const [score, setScore] = useState(savedState?.score ?? 0);
   const [portalsCleared, setPortalsCleared] = useState(savedState?.portalsCleared ?? 0);
+  const [questionsVisited, setQuestionsVisited] = useState(savedState?.questionsVisited ?? 0);
   const [bonusesCleared, setBonusesCleared] = useState(savedState?.bonusesCleared ?? 0);
   const [obstaclesHit, setObstaclesHit] = useState(savedState?.obstaclesHit ?? 0);
   const [difficulty, setDifficulty] = useState(savedState?.difficulty || DIFFICULTY.EASY);
@@ -197,6 +198,7 @@ export const GameProvider = ({ children }) => {
     setHealth(INITIAL_HEALTH);
     setScore(0);
     setPortalsCleared(0);
+    setQuestionsVisited(0);
     setBonusesCleared(0);
     setObstaclesHit(0);
     setDifficulty(DIFFICULTY.EASY);
@@ -223,6 +225,7 @@ export const GameProvider = ({ children }) => {
         health,
         score,
         portalsCleared,
+        questionsVisited,
         bonusesCleared,
         obstaclesHit,
         difficulty,
@@ -237,7 +240,7 @@ export const GameProvider = ({ children }) => {
       };
       saveGameState(stateToSave);
     }
-  }, [gameStatus, health, score, portalsCleared, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, currentQuestion, showQuestionOverlay, questionTimeRemaining, saveGameState]);
+  }, [gameStatus, health, score, portalsCleared, questionsVisited, bonusesCleared, obstaclesHit, difficulty, globalTimeLeft, timeSurvived, currentSpeed, currentQuestion, showQuestionOverlay, questionTimeRemaining, saveGameState]);
 
   // Save state with fresh timestamp when user leaves the page
   useEffect(() => {
@@ -248,6 +251,7 @@ export const GameProvider = ({ children }) => {
           health,
           score,
           portalsCleared,
+          questionsVisited,
           bonusesCleared,
           obstaclesHit,
           difficulty,
@@ -402,6 +406,7 @@ export const GameProvider = ({ children }) => {
     setHealth(INITIAL_HEALTH);
     setScore(0);
     setPortalsCleared(0);
+    setQuestionsVisited(0);
     setBonusesCleared(0);
     setObstaclesHit(0);
     setDifficulty(DIFFICULTY.EASY);
@@ -528,11 +533,11 @@ export const GameProvider = ({ children }) => {
     });
   }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend]);
 
-  // Update difficulty based on portals cleared
-  const updateDifficulty = useCallback((portals) => {
-    if (portals >= DIFFICULTY_PROGRESSION.PORTALS_FOR_HARD) {
+  // Update difficulty based on questions visited (solved + saved)
+  const updateDifficulty = useCallback((visited) => {
+    if (visited >= DIFFICULTY_PROGRESSION.PORTALS_FOR_HARD) {
       setDifficulty(DIFFICULTY.HARD);
-    } else if (portals >= DIFFICULTY_PROGRESSION.PORTALS_FOR_MEDIUM) {
+    } else if (visited >= DIFFICULTY_PROGRESSION.PORTALS_FOR_MEDIUM) {
       setDifficulty(DIFFICULTY.MEDIUM);
     } else {
       setDifficulty(DIFFICULTY.EASY);
@@ -581,17 +586,26 @@ export const GameProvider = ({ children }) => {
     let newBonuses = bonusesCleared;
     
     if (isCorrect) {
-      scoreDelta = SCORING.CORRECT_ANSWER;
+      // Use difficulty-based scoring from gameConfig
+      scoreDelta = difficulty.scoreBonus;
       
       newPortals = portalsCleared + 1;
       setPortalsCleared(newPortals);
-      updateDifficulty(newPortals);
+      
+      // Increment questions visited (for difficulty progression)
+      const newQuestionsVisited = questionsVisited + 1;
+      setQuestionsVisited(newQuestionsVisited);
+      updateDifficulty(newQuestionsVisited);
+      
+      // Check if game should end (reached max questions: 15)
+      const reachedMaxQuestions = newQuestionsVisited >= DIFFICULTY_PROGRESSION.MAX_QUESTIONS;
       
       const newScore = Math.max(0, score + scoreDelta);
       setScore(newScore);
       
       // Update backend with new game state (use refs for rapidly-changing values)
-      updateGameStateOnBackend('answer_correct', {
+      const action = reachedMaxQuestions ? 'game_over' : 'answer_correct';
+      updateGameStateOnBackend(action, {
         health: newHealth,
         score: newScore,
         portalsCleared: newPortals,
@@ -607,7 +621,8 @@ export const GameProvider = ({ children }) => {
         correct: true,
         newHealth,
         scoreDelta,
-        continueGame: newHealth > 0,
+        continueGame: newHealth > 0 && !reachedMaxQuestions,
+        gameCompleted: reachedMaxQuestions,
       };
       
       // Mark question as used only after correct answer
@@ -618,6 +633,19 @@ export const GameProvider = ({ children }) => {
       setShowQuestionOverlay(false);
       setQuestionTimeRemaining(null); // Clear saved question timer
       setShowResultOverlay(true);
+      
+      // End game if reached max questions
+      if (reachedMaxQuestions) {
+        setGameStatus('ended');
+        if (phaserGameRef.current?.scene?.scenes[0]) {
+          const runnerScene = phaserGameRef.current.scene.scenes[0];
+          if (runnerScene.stopGame) {
+            runnerScene.stopGame();
+          } else {
+            runnerScene.physics?.pause();
+          }
+        }
+      }
       
       return result;
     } else {
@@ -630,15 +658,21 @@ export const GameProvider = ({ children }) => {
         allowRetry: true, // Flag to indicate user can retry
       };
     }
-  }, [currentQuestion, health, portalsCleared, bonusesCleared, obstaclesHit, score, difficulty, currentSpeed, updateDifficulty, updateGameStateOnBackend]);
+  }, [currentQuestion, health, questionsVisited, portalsCleared, bonusesCleared, obstaclesHit, score, difficulty, currentSpeed, updateDifficulty, updateGameStateOnBackend]);
 
   // Use Save Me - skips the question but uses a life
   const useSaveMe = useCallback(() => {
     const newHealth = Math.max(0, health - 1);
     setHealth(newHealth);
     
-    // Determine if game should end
-    const shouldEndGame = newHealth <= 0;
+    // Increment questions visited (for difficulty progression)
+    const newQuestionsVisited = questionsVisited + 1;
+    setQuestionsVisited(newQuestionsVisited);
+    updateDifficulty(newQuestionsVisited);
+    
+    // Check if game should end (health depleted OR reached max questions: 15)
+    const reachedMaxQuestions = newQuestionsVisited >= DIFFICULTY_PROGRESSION.MAX_QUESTIONS;
+    const shouldEndGame = newHealth <= 0 || reachedMaxQuestions;
     
     // Update backend with appropriate action (use refs for rapidly-changing values)
     const action = shouldEndGame ? 'game_over' : 'save_me_used';
@@ -658,8 +692,9 @@ export const GameProvider = ({ children }) => {
       correct: false,
       newHealth,
       scoreDelta: 0,
-      continueGame: newHealth > 0,
+      continueGame: !shouldEndGame,
       savedWithLife: true,
+      gameCompleted: reachedMaxQuestions,
     };
     
     // Mark question as used when skipped with Save Me
@@ -671,7 +706,7 @@ export const GameProvider = ({ children }) => {
     setQuestionTimeRemaining(null); // Clear saved question timer
     setShowResultOverlay(true);
     
-    // If health is 0, immediately set game status to ended
+    // If health is 0 or reached max questions, immediately set game status to ended
     if (shouldEndGame) {
       setGameStatus('ended');
       if (phaserGameRef.current?.scene?.scenes[0]) {
@@ -685,15 +720,21 @@ export const GameProvider = ({ children }) => {
     }
     
     return result;
-  }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, currentQuestion]);
+  }, [health, questionsVisited, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, updateDifficulty, currentQuestion]);
 
   // Handle timeout
   const handleTimeout = useCallback(() => {
     const newHealth = Math.max(0, health - 1);
     setHealth(newHealth);
     
-    // Determine if game should end
-    const shouldEndGame = newHealth <= 0;
+    // Increment questions visited (for difficulty progression) - timeout also counts as visiting
+    const newQuestionsVisited = questionsVisited + 1;
+    setQuestionsVisited(newQuestionsVisited);
+    updateDifficulty(newQuestionsVisited);
+    
+    // Check if game should end (health depleted OR reached max questions: 15)
+    const reachedMaxQuestions = newQuestionsVisited >= DIFFICULTY_PROGRESSION.MAX_QUESTIONS;
+    const shouldEndGame = newHealth <= 0 || reachedMaxQuestions;
     
     // Update backend for timeout with appropriate action (use refs for rapidly-changing values)
     const action = shouldEndGame ? 'game_over' : 'answer_incorrect';
@@ -713,8 +754,9 @@ export const GameProvider = ({ children }) => {
       correct: false,
       newHealth,
       scoreDelta: 0,
-      continueGame: newHealth > 0,
+      continueGame: !shouldEndGame,
       timeout: true,
+      gameCompleted: reachedMaxQuestions,
     };
     
     // Mark question as used when time runs out
@@ -726,7 +768,7 @@ export const GameProvider = ({ children }) => {
     setQuestionTimeRemaining(null); // Clear saved question timer
     setShowResultOverlay(true);
     
-    // If health is 0, immediately set game status to ended
+    // If health is 0 or reached max questions, immediately set game status to ended
     if (shouldEndGame) {
       setGameStatus('ended');
       if (phaserGameRef.current?.scene?.scenes[0]) {
@@ -740,7 +782,7 @@ export const GameProvider = ({ children }) => {
     }
     
     return result;
-  }, [health, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, currentQuestion]);
+  }, [health, questionsVisited, portalsCleared, bonusesCleared, obstaclesHit, difficulty, currentSpeed, updateGameStateOnBackend, updateDifficulty, currentQuestion]);
 
   // Close result overlay
   const closeResultOverlay = useCallback(() => {

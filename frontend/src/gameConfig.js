@@ -47,22 +47,23 @@ export const DIFFICULTY = {
   MEDIUM: { 
     name: 'MEDIUM', 
     timeLimit: TIME.QUESTION_TIME_MEDIUM, 
-    scoreBonus: 150 
+    scoreBonus: 200 
   },
   HARD: { 
     name: 'HARD', 
     timeLimit: TIME.QUESTION_TIME_HARD, 
-    scoreBonus: 200 
+    scoreBonus: 300 
   },
 };
 
 // ===========================================
 // DIFFICULTY PROGRESSION
-// Number of portals (questions) to clear for difficulty upgrade
+// Number of questions visited (solved OR saved) for difficulty upgrade
 // ===========================================
 export const DIFFICULTY_PROGRESSION = {
-  PORTALS_FOR_MEDIUM: 5,  // Clear 5 portals to move from EASY to MEDIUM
-  PORTALS_FOR_HARD: 10,   // Clear 10 portals to move from MEDIUM to HARD
+  PORTALS_FOR_MEDIUM: 5,  // Visit 5 questions to move from EASY to MEDIUM
+  PORTALS_FOR_HARD: 10,   // Visit 10 questions total to move from MEDIUM to HARD
+  MAX_QUESTIONS: 15,      // Game ends after visiting 15 questions (5 easy + 5 medium + 5 hard)
 };
 
 // ===========================================

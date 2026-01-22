@@ -65,7 +65,6 @@ export const mockQuestions = {
       correctAnswer: 'IE{mind_flayer_detected}',
       link: 'https://ctf-image-challenge.vercel.app/',
       difficulty: 'MEDIUM',
-      hasCode: true,
     },
     {
       id: 'm2',
@@ -77,14 +76,13 @@ export const mockQuestions = {
     {
       id: 'm3',
       questionText: 'Deep beneath Hawkins, a corrupted image has surfaced from a sealed terminal.At first glance it appears ordinary, but the lab knows better — the truth isn’t meant to be seen, only extracted.The message was hidden using techniques beyond normal perception.Those who understand how to listen between pixels may uncover what the Upside Down tried to bury.',
-      correctAnswer: 'IE{ROT13: Shaqre_Mbar_77}',
+      correctAnswer: 'IE{ROT13:Shaqre_Mbar_77}',
       link: 'https://drive.google.com/drive/folders/1VIHY0773wSMEw3blyvXfioGsCnY3IPog',
       difficulty: 'MEDIUM',
-      hasCode: true,
     },
     {
       id: 'm4',
-      questionText: 'IThe Upside Down has spoken. Decode the signal from the Void. Use the linked document to find the hidden message.',
+      questionText: 'The Upside Down has spoken. Decode the signal from the Void. Use the linked document to find the hidden message.',
       correctAnswer: 'IE{MURRAY_MF}',
       link: 'https://drive.google.com/drive/folders/1Tv7VvjzWEAYgjk668WdoVWYWvRODNc1_',
       difficulty: 'MEDIUM',
@@ -95,7 +93,6 @@ export const mockQuestions = {
       correctAnswer: 'IE{17_14_BRIATORE}',
       link: 'https://drive.google.com/drive/u/0/folders/1EeMZQp-qXesJGutJSe_qgDTz6VHfn2li',
       difficulty: 'MEDIUM',
-      hasCode: true,
     },
   ],
   HARD: [
@@ -105,7 +102,6 @@ export const mockQuestions = {
       correctAnswer: 'IE{Comanechi}',
       link: 'https://drive.google.com/drive/folders/1Cx1wEpBCLv6YF1JdrHogwGBO6Qcdoc82',
       difficulty: 'HARD',
-      hasCode: true,
     },
     {
       id: 'h2',
@@ -120,7 +116,6 @@ export const mockQuestions = {
       correctAnswer: 'IE{DEMOLOSES}',
       link: 'https://drive.google.com/drive/folders/1OXnk08JalF_W0n7_4njl-hplPlmMJ920?usp=drive_link',
       difficulty: 'HARD',
-      hasCode: true,
     },
     {
       id: 'h4',
@@ -135,7 +130,6 @@ export const mockQuestions = {
       correctAnswer: 'IE{Scalability}',
       link:'https://docs.google.com/document/d/1FdpYRgf4SqDdpTpDCNs5lGouThmzyMBHEycfpgab0yI/edit?usp=drivesdk',
       difficulty: 'HARD',
-      hasCode: true,
     },
   ],
 };

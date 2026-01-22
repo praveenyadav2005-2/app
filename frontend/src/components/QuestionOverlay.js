@@ -178,20 +178,9 @@ const QuestionOverlay = () => {
               {currentQuestion.difficulty} CIPHER LEVEL
             </p>
             
-            {currentQuestion.hasCode ? (
-              <div className="space-y-4 sm:space-y-5">
-                <p className="font-code text-sm sm:text-lg text-gray-100 leading-relaxed">
-                  {currentQuestion.questionText.split('\n')[0]}
-                </p>
-                <pre className="code-block bg-black/80 border border-white/40 p-3 sm:p-4 rounded overflow-x-auto text-sm sm:text-base">
-                  <code className="text-white">{currentQuestion.questionText.split('\n').slice(1).join('\n')}</code>
-                </pre>
-              </div>
-            ) : (
-              <p data-testid="question-text" className="font-code text-sm sm:text-lg text-gray-100 leading-relaxed">
-                {currentQuestion.questionText}
-              </p>
-            )}
+            <p data-testid="question-text" className="font-code text-sm sm:text-lg text-gray-100 leading-relaxed">
+              {currentQuestion.questionText}
+            </p>
 
             {/* Document Link */}
             {currentQuestion.link && (
