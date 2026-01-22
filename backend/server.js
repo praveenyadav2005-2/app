@@ -34,9 +34,7 @@ app.use(helmet({
 
 // CORS configuration - restrict in production
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || 'https://enigma-cicada.vercel.app/'
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: "https://enigma-cicada.vercel.app",
   credentials: true,
   optionsSuccessStatus: 200
 };
