@@ -10,6 +10,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy - required when behind a reverse proxy (Render, Heroku, Nginx, etc.)
+// This allows express-rate-limit to correctly identify users via X-Forwarded-For header
+app.set('trust proxy', 1);
+
 // Security middleware with CSP configuration
 app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
