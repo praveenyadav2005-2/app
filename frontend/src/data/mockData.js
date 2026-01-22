@@ -40,7 +40,7 @@ export const mockQuestions = {
       id: 'e6',
       questionText: 'Hawkins Lab collects real-time sensor readings to monitor disturbances across the town.Something in the Upside Down is responding to these signals.Study the attached document carefully and determine the correct outcome before it is too late.',
       correctAnswer: 'IE{anamoly_detection}',
-      link:'https://drive.google.com/drive/folders/1P89i4PnFkhSsnLmKpEB834kU5U8piNwk',
+      link:'https://drive.google.com/drive/u/0/folders/16oESJEUBNy7f76ZRzY40Gbk52Ay0Ye3o',
       difficulty: 'EASY',
     },
     {
@@ -85,22 +85,17 @@ export const mockQuestions = {
     {
       id: 'm4',
       questionText: 'IThe Upside Down has spoken. Decode the signal from the Void. Use the linked document to find the hidden message.',
-      correctAnswer: 'having',
+      correctAnswer: 'IE{MURRAY_MF}',
       link: 'https://drive.google.com/drive/folders/1Tv7VvjzWEAYgjk668WdoVWYWvRODNc1_',
       difficulty: 'MEDIUM',
     },
     {
       id: 'm5',
-      questionText: 'What is the output?\n\nprint(len(set([1,1,2,2,3])))',
-      correctAnswer: '3',
+      questionText: 'In Hawkins, a new pattern of Upside Down activity has emerged. Eleven suspects a link between the energy surges and local wildlife behavior. Using the data in the linked document, help her identify the correct correlation coefficient that explains this phenomenon.',
+      correctAnswer: 'IE{17_14_BRIATORE}',
+      link: 'https://drive.google.com/drive/u/0/folders/1EeMZQp-qXesJGutJSe_qgDTz6VHfn2li',
       difficulty: 'MEDIUM',
       hasCode: true,
-    },
-    {
-      id: 'm6',
-      questionText: 'What HTTP status code means "Not Found"?',
-      correctAnswer: '404',
-      difficulty: 'MEDIUM',
     },
   ],
   HARD: [
@@ -136,29 +131,11 @@ export const mockQuestions = {
     },
     {
       id: 'h5',
-      questionText: 'What is the output?\n\nprint(bool([] == False))',
-      correctAnswer: 'false',
+      questionText: 'The town of Hawkins has launched a new digital emergency system to monitor strange activities across the city.To prepare for high demand, the system is deployed across 8 identical machines in the underground lab.',
+      correctAnswer: 'IE{Scalability}',
+      link:'https://docs.google.com/document/d/1FdpYRgf4SqDdpTpDCNs5lGouThmzyMBHEycfpgab0yI/edit?usp=drivesdk',
       difficulty: 'HARD',
       hasCode: true,
-    },
-    {
-      id: 'h6',
-      questionText: 'What pattern does the Observer pattern implement? (one word)',
-      correctAnswer: 'publish-subscribe',
-      difficulty: 'HARD',
-    },
-    {
-      id: 'h7',
-      questionText: 'Result of:\n\nconsole.log(0.1 + 0.2 === 0.3)',
-      correctAnswer: 'false',
-      difficulty: 'HARD',
-      hasCode: true,
-    },
-    {
-      id: 'h8',
-      questionText: 'What algorithm is used by JavaScript\'s Array.sort() internally? (one word)',
-      correctAnswer: 'timsort',
-      difficulty: 'HARD',
     },
   ],
 };
