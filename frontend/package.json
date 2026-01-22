@@ -5,7 +5,7 @@
   "engines": {
   "node": "18.x"
 },
-    "packageManager": "pnpm@10.28.1",
+   "packageManager": "pnpm@9.15.6",
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.8",
