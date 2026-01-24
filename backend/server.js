@@ -34,7 +34,7 @@ app.use(helmet({
 
 // CORS configuration - restrict in production
 const corsOptions = {
-  origin: "https://enigma-cicada.vercel.app",
+  origin: "https://enigma-you-cannot-access.vercel.app",
   credentials: true,
   optionsSuccessStatus: 200
 };
